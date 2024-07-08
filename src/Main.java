@@ -3,7 +3,7 @@ public class Main {
         RestWrapper restWrapper = new RestWrapper();
 
         // Test POST request
-        RequestStatus postStatus = restWrapper.sendPost(RestPath.POST_PATH, "Test payload");
+        RequestStatus postStatus = restWrapper.sendPost(RestPath.POST_PATH, "Test Payload");
         System.out.println("POST Request Success: " + postStatus.isSuccess());
         System.out.println("POST Request Message: " + postStatus.getMessage());
 
