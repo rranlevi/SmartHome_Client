@@ -1,4 +1,4 @@
-package Classes;
+package Enums;
 
 public enum RestPath {
     POST_PATH("/api/postPath"),

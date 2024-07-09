@@ -1,5 +1,5 @@
 import Classes.RequestStatus;
-import Classes.RestPath;
+import Enums.RestPath;
 
 import java.net.URI;
 import java.net.http.HttpClient;
