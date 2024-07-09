@@ -1,3 +1,5 @@
+import classes.RequestStatus;
+
 public class Main {
     public static void main(String[] args) {
         RestWrapper restWrapper = new RestWrapper();

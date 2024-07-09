@@ -47,8 +47,8 @@ class DeviceAction {
         this.channel = channel;
     }
 
-    public ActionStatus doAction() {
+    public RequestStatus doAction() {
         // Implementation here
-        return new ActionStatus();
+        return new RequestStatus(false, "");
     }
 }

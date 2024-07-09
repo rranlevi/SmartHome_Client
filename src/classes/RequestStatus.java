@@ -1,3 +1,5 @@
+package classes;
+
 public class RequestStatus {
     private boolean success;
     private String message;
