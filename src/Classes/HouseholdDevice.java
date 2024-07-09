@@ -1,6 +1,6 @@
 package Classes;
 
-class HouseholdDevice extends Device {
+public class HouseholdDevice extends Device {
     private String deviceImage;
     private DeviceDataController deviceDataController;
     private DeviceActionController deviceActionController;
