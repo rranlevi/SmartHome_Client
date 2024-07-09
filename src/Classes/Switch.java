@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class Switch extends Widget {
     private boolean switchIsOn;

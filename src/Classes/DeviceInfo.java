@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class DeviceInfo {
     private Info deviceInfo;

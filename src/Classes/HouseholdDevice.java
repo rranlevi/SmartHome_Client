@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class HouseholdDevice extends Device {
     private String deviceImage;

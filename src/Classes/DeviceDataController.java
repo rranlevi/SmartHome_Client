@@ -1,11 +1,11 @@
-package classes;
+package Classes;
 
 import java.util.List;
 
-class DeviceActionController {
+class DeviceDataController {
     private String name;
     private String description;
-    private List<DeviceAction> deviceActions;
+    private List<DeviceInfo> deviceData;
 
     public String getName() {
         return name;
@@ -23,11 +23,11 @@ class DeviceActionController {
         this.description = description;
     }
 
-    public List<DeviceAction> getDeviceActions() {
-        return deviceActions;
+    public List<DeviceInfo> getDeviceData() {
+        return deviceData;
     }
 
-    public void setDeviceActions(List<DeviceAction> deviceActions) {
-        this.deviceActions = deviceActions;
+    public void setDeviceData(List<DeviceInfo> deviceData) {
+        this.deviceData = deviceData;
     }
 }

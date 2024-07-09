@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class DeviceAction {
     private String name;

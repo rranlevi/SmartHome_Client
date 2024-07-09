@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class Info {
     private String infoName;

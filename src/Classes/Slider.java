@@ -1,4 +1,4 @@
-package classes;
+package Classes;
 
 class Slider extends Widget {
     private String sliderValue;
