@@ -1,3 +1,5 @@
+package Classes;
+
 public enum RestPath {
     POST_PATH("/api/postPath"),
     GET_PATH("/api/getPath");
