@@ -5,6 +5,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import Classes.HouseholdDevice;
 import Classes.RequestStatus;
@@ -13,36 +14,74 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
-import java.util.Set;
 
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
     private List<JCheckBox> checkBoxes;
+    private CardLayout cardLayout;
+    private JPanel cardPanel;
+    private JPanel devicePanel;
+    private JPanel buttonPanel;
 
-    public AddDevicesPanel() {
-        this.receivedDevices = fetchDevicesFromServer();
+    public AddDevicesPanel(CardLayout cardLayout, JPanel cardPanel) {
+        this.cardLayout = cardLayout;
+        this.cardPanel = cardPanel;
         this.checkBoxes = new ArrayList<>();
-        setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
+        setLayout(new BorderLayout());
 
-        // Add vertical glue for top spacing
-        add(Box.createVerticalGlue());
+        // Panel for device checkboxes
+        devicePanel = new JPanel();
+        devicePanel.setLayout(new BoxLayout(devicePanel, BoxLayout.Y_AXIS));
+        JScrollPane scrollPane = new JScrollPane(devicePanel);
+        add(scrollPane, BorderLayout.CENTER);
 
-        // Create checkboxes for each device and add them centered
-        for (HouseholdDevice device : receivedDevices) {
-            JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " + device.getDescription());
-            checkBoxes.add(checkBox);
-            add(centerComponent(checkBox));
+        // Panel for buttons
+        buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        buttonPanel.add(createAddButton());
+        buttonPanel.add(createGoBackButton());
+        buttonPanel.add(createRefreshButton());
+        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Initial population of devices
+        refreshDeviceList();
+    }
+
+    private void refreshDeviceList() {
+        // Clear existing device checkboxes
+        devicePanel.removeAll();
+        checkBoxes.clear();
+
+        // Fetch devices and filter out existing ones
+        receivedDevices = fetchDevicesFromServer();
+        Set<String> existingDeviceIds = new HashSet<>();
+        for (HouseholdDevice device : SharedDB.devices) {
+            existingDeviceIds.add(device.getDeviceId());
         }
 
-        // Add the "Add Selected Devices" button, centered
-        add(centerComponent(createAddButton()));
+        // Create checkboxes for each non-existing device and add them
+        boolean newDevicesFound = false;
+        for (HouseholdDevice device : receivedDevices) {
+            if (!existingDeviceIds.contains(device.getDeviceId())) {
+                JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " + device.getDescription());
+                checkBoxes.add(checkBox);
+                devicePanel.add(centerComponent(checkBox));
+                newDevicesFound = true;
+            }
+        }
 
-        // Add vertical glue for bottom spacing
-        add(Box.createVerticalGlue());
+        // If no new devices are found, add a message
+        if (!newDevicesFound) {
+            JLabel noNewDevicesLabel = new JLabel("No new devices available.");
+            devicePanel.add(centerComponent(noNewDevicesLabel));
+        }
+
+        // Revalidate and repaint to update the UI
+        devicePanel.revalidate();
+        devicePanel.repaint();
     }
 
     private List<HouseholdDevice> fetchDevicesFromServer() {
-        // Placeholder list to be returned
         List<HouseholdDevice> devices = new ArrayList<>();
 
         // Fetch available devices from server
@@ -75,30 +114,39 @@ public class AddDevicesPanel extends JPanel {
             public void actionPerformed(ActionEvent e) {
                 List<HouseholdDevice> selectedDevices = getSelectedDevices();
 
-                // Create a set of existing deviceIds from SharedDB.devices
-                Set<String> existingDeviceIds = new HashSet<>();
-                for (HouseholdDevice existingDevice : SharedDB.devices) {
-                    existingDeviceIds.add(existingDevice.getDeviceId());
-                }
-
-                // Iterate over selectedDevices and remove the ones already in SharedDB.devices
-                selectedDevices.removeIf(newDevice -> existingDeviceIds.contains(newDevice.getDeviceId()));
-
-                // Add the remaining selected devices to SharedDB.devices
+                // Add the selected devices to SharedDB.devices
                 SharedDB.devices.addAll(selectedDevices);
 
-                // For confirmation, print the selected devices
-                System.out.println("Selected Devices Added:");
-                for (HouseholdDevice device : selectedDevices) {
-                    System.out.println(device.getDeviceName() + " - " + device.getDescription());
-                }
+                // Refresh the device list to remove added devices
+                refreshDeviceList();
             }
         });
         return addButton;
     }
 
+    private JButton createGoBackButton() {
+        JButton goBackButton = new JButton("Go back to main screen");
+        goBackButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cardLayout.show(cardPanel, "MainPanel");
+            }
+        });
+        return goBackButton;
+    }
+
+    private JButton createRefreshButton() {
+        JButton refreshButton = new JButton("Refresh devices");
+        refreshButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                refreshDeviceList();
+            }
+        });
+        return refreshButton;
+    }
+
     private Component centerComponent(JComponent component) {
-        // Wrap the component in a Box with horizontal glue for centering
         Box box = Box.createHorizontalBox();
         box.add(Box.createHorizontalGlue());
         box.add(component);
@@ -106,3 +154,4 @@ public class AddDevicesPanel extends JPanel {
         return box;
     }
 }
+
