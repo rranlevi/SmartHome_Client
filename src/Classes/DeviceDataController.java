@@ -7,6 +7,12 @@ public class DeviceDataController {
     private String description;
     private List<DeviceInfo> deviceData;
 
+    public DeviceDataController(String name, String description, List<DeviceInfo> deviceData) {
+        this.name = name;
+        this.description = description;
+        this.deviceData = deviceData;
+    }
+
     public String getName() {
         return name;
     }

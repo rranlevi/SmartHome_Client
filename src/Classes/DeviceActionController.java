@@ -7,6 +7,12 @@ public class DeviceActionController {
     private String description;
     private List<DeviceAction> deviceActions;
 
+    public DeviceActionController(String name, String description, List<DeviceAction> deviceActions) {
+        this.name = name;
+        this.description = description;
+        this.deviceActions = deviceActions;
+    }
+
     public String getName() {
         return name;
     }

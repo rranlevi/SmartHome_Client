@@ -8,6 +8,13 @@ abstract public class Device {
     private String description;
     private List<Info> deviceFactoryInfo;
 
+    public Device(String deviceId, String deviceName, String description, List<Info> deviceFactoryInfo){
+        this.deviceId = deviceId;
+        this.deviceName = deviceName;
+        this.description = description;
+        this.deviceFactoryInfo = deviceFactoryInfo;
+    }
+
     public String getDeviceName() {
         return deviceName;
     }

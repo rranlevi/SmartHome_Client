@@ -4,6 +4,11 @@ public class DeviceChannel {
     private String channelName;
     private String channelPath;
 
+    public DeviceChannel(String channelName, String channelPath) {
+        this.channelName = channelName;
+        this.channelPath = channelPath;
+    }
+
     public String getChannelName() {
         return channelName;
     }

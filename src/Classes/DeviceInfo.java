@@ -3,7 +3,10 @@ package Classes;
 public class DeviceInfo {
     private Info deviceInfo;
     private DeviceChannel channel;
-
+    public DeviceInfo(Info deviceInfo, DeviceChannel channel){
+        this.deviceInfo = deviceInfo;
+        this.channel = channel;
+    }
     public Info getDeviceInfo() {
         return deviceInfo;
     }
