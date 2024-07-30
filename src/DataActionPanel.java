@@ -117,13 +117,8 @@ public class DataActionPanel extends JPanel {
     private JButton createReturnButton(CardLayout cardLayout, JPanel cardPanel) {
         JButton returnButton = new JButton("Return to Main Menu");
         returnButton.setFont(new Font("Arial", Font.PLAIN, 18));
-        //returnButton.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        //returnButton.setBackground(Color.WHITE);
-        //returnButton.setToolTipText("Return to Main Screen");
 
-        returnButton.addActionListener(e -> cardLayout.show(cardPanel, "MainPanel"));
+        returnButton.addActionListener(_ -> cardLayout.show(cardPanel, "MainPanel"));
         return returnButton;
     }
-
-
 }
