@@ -11,37 +11,74 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 public class MainPanel extends JPanel {
+    private CardLayout cardLayout;
+    private JPanel cardPanel;
+    private JPanel devicesPanel;
+
     public MainPanel(CardLayout cardLayout, JPanel cardPanel) {
+        this.cardLayout = cardLayout;
+        this.cardPanel = cardPanel;
         setLayout(new BorderLayout());
 
         JButton button = new JButton("Add New Devices");
-
         button.addActionListener(_ -> cardLayout.show(cardPanel, "AddDevicesPanel"));
         add(button, BorderLayout.NORTH);
 
-        JPanel devicesPanel = new JPanel();
+        devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));
 
-        for (HouseholdDevice device : SharedDB.devices) {
-            JPanel devicePanel = new JPanel();
-            devicePanel.setLayout(new BorderLayout());
+        add(new JScrollPane(devicesPanel), BorderLayout.CENTER);
 
-            JCheckBox checkBox = new JCheckBox(device.getDeviceName());
-            devicePanel.add(checkBox, BorderLayout.WEST);
+        refreshDevicesPanel();
+    }
 
-            JPanel infoPanel = new JPanel();
-            infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+    private void refreshDevicesPanel() {
+        devicesPanel.removeAll();
 
-            JLabel roomLabel = new JLabel("Room: " + device.getDeviceRoom());
-            JLabel descriptionLabel = new JLabel("Description: " + device.getDescription());
-            infoPanel.add(roomLabel);
-            infoPanel.add(descriptionLabel);
+        if (SharedDB.devices.isEmpty()) {
+            JLabel noDevicesLabel = new JLabel("No devices connected");
+            noDevicesLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            devicesPanel.add(noDevicesLabel);
+        } else {
+            for (HouseholdDevice device : SharedDB.devices) {
+                JPanel devicePanel = new JPanel(new GridBagLayout());
+                GridBagConstraints gbc = new GridBagConstraints();
+                gbc.fill = GridBagConstraints.HORIZONTAL;
+                gbc.weightx = 1;
+                gbc.gridx = 0;
+                gbc.gridy = 0;
 
-            devicePanel.add(infoPanel, BorderLayout.CENTER);
+                JLabel deviceInfo = new JLabel(device.getDeviceName() + " | Room: " + device.getDeviceRoom() + " | Description: " + device.getDescription());
+                devicePanel.add(deviceInfo, gbc);
 
-            devicesPanel.add(devicePanel);
+                gbc.gridx = 1;
+                gbc.weightx = 0;
+                gbc.anchor = GridBagConstraints.EAST;
+
+                JPanel buttonPanel = new JPanel();
+                buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+
+                JButton actionsDataButton = new JButton("Actions & Data");
+                actionsDataButton.addActionListener(e -> {
+                    // Placeholder for opening a new panel
+                    JOptionPane.showMessageDialog(this, "Actions & Data for " + device.getDeviceName());
+                });
+                buttonPanel.add(actionsDataButton);
+
+                JButton removeButton = new JButton("Remove");
+                removeButton.addActionListener(e -> {
+                    SharedDB.devices.remove(device);
+                    refreshDevicesPanel(); // Refresh the panel after removal
+                });
+                buttonPanel.add(removeButton);
+
+                devicePanel.add(buttonPanel, gbc);
+
+                devicesPanel.add(devicePanel);
+            }
         }
 
-        add(new JScrollPane(devicesPanel), BorderLayout.CENTER);
+        devicesPanel.revalidate();
+        devicesPanel.repaint();
     }
 }
