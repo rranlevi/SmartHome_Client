@@ -31,7 +31,6 @@ public class Main {
             System.out.println("GET Request Failed: " + getDiscDevicesStatus.getMessage());
         }
 
-
         //TODO: Add all panels here and to the cardPanel
         MainPanel mainPanel = new MainPanel(cardLayout, cardPanel);
         AddDevicesPanel devicesPanel = new AddDevicesPanel();

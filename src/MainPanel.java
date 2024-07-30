@@ -1,14 +1,7 @@
-import Classes.Device;
+import Classes.*;
 
 import javax.swing.*;
 import java.awt.*;
-
-import Classes.*;
-import java.util.*;
-
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
 
 public class MainPanel extends JPanel {
     public MainPanel(CardLayout cardLayout, JPanel cardPanel) {
@@ -26,8 +19,13 @@ public class MainPanel extends JPanel {
             JPanel devicePanel = new JPanel();
             devicePanel.setLayout(new BorderLayout());
 
+            // Decode the Base64 image string to ImageIcon
+            ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
+            JLabel imageLabel = new JLabel(imageIcon);
+            devicePanel.add(imageLabel, BorderLayout.WEST);
+
             JCheckBox checkBox = new JCheckBox(device.getDeviceName());
-            devicePanel.add(checkBox, BorderLayout.WEST);
+            devicePanel.add(checkBox, BorderLayout.CENTER);
 
             JPanel infoPanel = new JPanel();
             infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
@@ -37,7 +35,7 @@ public class MainPanel extends JPanel {
             infoPanel.add(roomLabel);
             infoPanel.add(descriptionLabel);
 
-            devicePanel.add(infoPanel, BorderLayout.CENTER);
+            devicePanel.add(infoPanel, BorderLayout.EAST);
 
             devicesPanel.add(devicePanel);
         }
