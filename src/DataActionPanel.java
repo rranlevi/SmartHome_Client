@@ -1,12 +1,22 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+
 import Classes.*;
 
+
 public class DataActionPanel extends JPanel {
+    private final CardLayout cardLayout;
+    private final JPanel cardPanel;
+    private static final String SERVER_PATH = "http://127.0.0.1";
+
 
     public DataActionPanel(CardLayout cardLayout, JPanel cardPanel, HouseholdDevice device) {
-        setLayout(new BorderLayout(10, 10));
-        setBackground(Color.WHITE);
+        this.cardLayout = cardLayout;
+        this.cardPanel = cardPanel;
+
+        setLayout(new BorderLayout());
 
         // Initialize and add title section
         JLabel titleLabel = createTitle();
@@ -14,12 +24,15 @@ public class DataActionPanel extends JPanel {
 
         // Initialize and add central container with data and action sections
         JPanel centralPanel = createCentralPanel(device);
+        centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
         add(centralPanel, BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(centralPanel);
+        add(scrollPane, BorderLayout.CENTER);
 
         // Initialize and add return button
-        JButton returnButton = createReturnButton(cardLayout, cardPanel);
+        JButton returnButton = createReturnButton();
         JPanel buttonPanel = new JPanel();
-        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.setLayout(new FlowLayout());
         buttonPanel.add(returnButton);
         add(buttonPanel, BorderLayout.SOUTH);
     }
@@ -34,7 +47,6 @@ public class DataActionPanel extends JPanel {
     private JPanel createCentralPanel(HouseholdDevice device) {
         JPanel centralPanel = new JPanel();
         centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
-        centralPanel.setBackground(Color.WHITE);
 
         JPanel dataSection = createDataSection(device);
         centralPanel.add(dataSection);
@@ -48,7 +60,6 @@ public class DataActionPanel extends JPanel {
 
     private JPanel createDataSection(HouseholdDevice device) {
         JPanel dataSection = new JPanel(new BorderLayout());
-        dataSection.setBackground(Color.WHITE);
 
         JLabel dataTitle = new JLabel("Data");
         dataTitle.setFont(new Font("Arial", Font.BOLD, 16));
@@ -57,9 +68,9 @@ public class DataActionPanel extends JPanel {
 
         JPanel dataPanel = new JPanel();
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
-        dataPanel.setBackground(Color.WHITE);
         for (DeviceInfo data : device.getDeviceDataController().getDeviceData()) {
-            JLabel dataLabel = new JLabel(data.getDeviceInfo().getInfoName() + ": " + data.getDeviceInfo().getInfoValue());
+            RequestStatus requestStatus = SharedDB.restWrapper.sendGet(data.getChannel().getChannelPath());
+            JLabel dataLabel = new JLabel(data.getDeviceInfo().getInfoName() + ": " + requestStatus.getMessage());
             dataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
             dataPanel.add(dataLabel);
         }
@@ -70,7 +81,6 @@ public class DataActionPanel extends JPanel {
 
     private JPanel createActionSection(HouseholdDevice device) {
         JPanel actionSection = new JPanel(new BorderLayout());
-        actionSection.setBackground(Color.WHITE);
 
         JLabel actionTitle = new JLabel("Actions");
         actionTitle.setFont(new Font("Arial", Font.BOLD, 16));
@@ -79,15 +89,21 @@ public class DataActionPanel extends JPanel {
 
         JPanel actionPanel = new JPanel();
         actionPanel.setLayout(new BoxLayout(actionPanel, BoxLayout.Y_AXIS));
-        actionPanel.setBackground(Color.WHITE);
         for (DeviceAction action : device.getDeviceActionController().getDeviceActions()) {
             if (action.isAvailable()) {
                 switch (action.getWidget().getText()) {
-                    case "Button":
-                        JButton actionButton = new JButton(action.getName());
-                        actionButton.setToolTipText(action.getDescription());
-                        actionButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        actionPanel.add(actionButton);
+                    case "Dropdown":
+                        JLabel actionComboboxLabel = new JLabel(action.getName());
+                        JComboBox actionCombobox = new JComboBox();
+                        actionComboboxLabel.setToolTipText(action.getDescription());
+                        actionComboboxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        actionCombobox.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        //TODO: add action
+                        actionCombobox.addActionListener(_ -> {
+                            //SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), action.p);
+                        });
+                        actionPanel.add(actionComboboxLabel);
+                        actionPanel.add(actionCombobox);
                         break;
 
                     case "Slider":
@@ -96,6 +112,7 @@ public class DataActionPanel extends JPanel {
                         actionSliderLabel.setToolTipText(action.getDescription());
                         actionSliderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                         actionSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        //TODO: add action with send button
                         actionPanel.add(actionSliderLabel);
                         actionPanel.add(actionSlider);
                         break;
@@ -104,6 +121,24 @@ public class DataActionPanel extends JPanel {
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        RequestStatus temp = SharedDB.restWrapper.sendGet(action.getChannel().getChannelPath());
+                        switch (temp.getMessage()){
+                            case "On":
+                                actionSwitch.setSelected(true);
+                                break;
+                            case "Off":
+                                actionSwitch.setSelected(false);
+                                break;
+                        }
+                        actionSwitch.addItemListener(new ItemListener() {
+                            public void itemStateChanged(ItemEvent ev) {
+                                if (ev.getStateChange() == ItemEvent.SELECTED) {
+                                    SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "On");
+                                } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
+                                    SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "Off");
+                                }
+                            }
+                        });
                         actionPanel.add(actionSwitch);
                         break;
                 }
@@ -114,9 +149,8 @@ public class DataActionPanel extends JPanel {
         return actionSection;
     }
 
-    private JButton createReturnButton(CardLayout cardLayout, JPanel cardPanel) {
-        JButton returnButton = new JButton("Return to Main Menu");
-        returnButton.setFont(new Font("Arial", Font.PLAIN, 18));
+    private JButton createReturnButton() {
+        JButton returnButton = new JButton("Go back to main screen");
 
         returnButton.addActionListener(_ -> cardLayout.show(cardPanel, "MainPanel"));
         return returnButton;
