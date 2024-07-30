@@ -35,14 +35,12 @@ public class RestWrapper {
         }
     }
 
-    public RequestStatus sendPost(String path, Object payload) {
+    public RequestStatus sendPost(String path, String payload) {
         try {
-            String jsonInputString = payload.toString(); // Assumes the payload has a proper toString implementation.
-
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create("http://localhost:8080" + path))
                     .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(jsonInputString))
+                    .POST(HttpRequest.BodyPublishers.ofString(payload))
                     .build();
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());

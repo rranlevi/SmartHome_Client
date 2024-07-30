@@ -121,7 +121,7 @@ public class DataActionPanel extends JPanel {
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        RequestStatus temp = SharedDB.restWrapper.sendGet(action.getChannel().getChannelPath());
+                        RequestStatus temp = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
                         switch (temp.getMessage()){
                             case "On":
                                 actionSwitch.setSelected(true);
