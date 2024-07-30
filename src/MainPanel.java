@@ -41,34 +41,41 @@ public class MainPanel extends JPanel {
             devicesPanel.add(noDevicesLabel);
         } else {
             for (HouseholdDevice device : SharedDB.devices) {
-                // Decode the Base64 image string to ImageIcon and scale it
-
                 JPanel devicePanel = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
+                gbc.insets = new Insets(5, 5, 5, 5); // Add padding
                 gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.weightx = 1;
+
+                // Add image
+                ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
+                JLabel imageLabel = new JLabel(imageIcon);
                 gbc.gridx = 0;
                 gbc.gridy = 0;
-                ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(),34,34);
-                JLabel imageLabel = new JLabel(imageIcon);
-                devicePanel.add(imageLabel, BorderLayout.WEST);
+                gbc.gridheight = 2;
+                gbc.weightx = 0;
+                devicePanel.add(imageLabel, gbc);
 
+                // Add device info
                 JLabel deviceInfo = new JLabel(device.getDeviceName() + " | Room: " + device.getDeviceRoom() + " | Description: " + device.getDescription());
+                gbc.gridx = 1;
+                gbc.gridy = 0;
+                gbc.gridheight = 1;
+                gbc.weightx = 1;
                 devicePanel.add(deviceInfo, gbc);
 
+                // Add buttons
                 gbc.gridx = 1;
-                gbc.weightx = 0;
-                gbc.anchor = GridBagConstraints.EAST;
+                gbc.gridy = 1;
+                gbc.gridheight = 1;
+                gbc.anchor = GridBagConstraints.WEST;
 
                 JPanel buttonPanel = new JPanel();
-                buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+                buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
                 JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
                     // Placeholder for opening a new panel
-                    DataActionPanel dataActionPanel = new DataActionPanel(cardLayout,cardPanel,device);
-                    cardPanel.add(dataActionPanel, "DataActionPanel");
-                    cardLayout.show(cardPanel,"DataActionPanel");
+                    JOptionPane.showMessageDialog(this, "Actions & Data for " + device.getDeviceName());
                 });
                 buttonPanel.add(actionsDataButton);
 
