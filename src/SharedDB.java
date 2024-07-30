@@ -1,5 +1,6 @@
 import Classes.HouseholdDevice;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 
 import java.io.FileWriter;
@@ -42,7 +43,7 @@ public class SharedDB {
 
     // Save devices to a JSON file
     public static void saveDevices() {
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try (FileWriter writer = new FileWriter(FILE_PATH)) {
             gson.toJson(devices, writer);
         } catch (IOException e) {
