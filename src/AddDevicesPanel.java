@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import Classes.HouseholdDevice;
 import Classes.RequestStatus;
@@ -47,33 +48,88 @@ public class AddDevicesPanel extends JPanel {
         refreshDeviceList();
     }
 
+    private void showLoadingIcon() {
+        // Clear existing components and show loading icon
+        devicePanel.removeAll();
+        // Path to gif
+        JLabel loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
+        devicePanel.add(centerComponent(loadingLabel));
+        devicePanel.revalidate();
+        devicePanel.repaint();
+    }
+
     private void refreshDeviceList() {
+        showLoadingIcon();
+
+        // Create a SwingWorker to fetch devices after the delay
+        SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
+            @Override
+            protected List<HouseholdDevice> doInBackground() throws Exception {
+                // Simulate a delay (loading effect) for 1.5 seconds
+                Thread.sleep(1500);
+
+                // Fetch devices and filter out existing ones
+                List<HouseholdDevice> fetchedDevices = fetchDevicesFromServer();
+                Set<String> existingDeviceIds = new HashSet<>();
+                for (HouseholdDevice device : SharedDB.getDevices()) {
+                    existingDeviceIds.add(device.getDeviceId());
+                }
+
+                // Filter devices not already added
+                List<HouseholdDevice> filteredDevices = new ArrayList<>();
+                for (HouseholdDevice device : fetchedDevices) {
+                    if (!existingDeviceIds.contains(device.getDeviceId())) {
+                        filteredDevices.add(device);
+                    }
+                }
+                return filteredDevices;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    receivedDevices = get();
+                    displayDeviceList();
+                } catch (InterruptedException | ExecutionException e) {
+                    e.printStackTrace();
+                }
+            }
+        };
+        worker.execute();
+    }
+
+    private void displayDeviceList() {
         // Clear existing device checkboxes
         devicePanel.removeAll();
         checkBoxes.clear();
 
-        // Fetch devices and filter out existing ones
-        receivedDevices = fetchDevicesFromServer();
-        Set<String> existingDeviceIds = new HashSet<>();
-        for (HouseholdDevice device : SharedDB.getDevices()) {
-            existingDeviceIds.add(device.getDeviceId());
-        }
-
-        // Create checkboxes for each non-existing device and add them
+        // Add new device checkboxes
         boolean newDevicesFound = false;
-        List<HouseholdDevice> filteredDevices = new ArrayList<>();
         for (HouseholdDevice device : receivedDevices) {
-            if (!existingDeviceIds.contains(device.getDeviceId())) {
-                JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " + device.getDescription());
-                checkBoxes.add(checkBox);
-                devicePanel.add(centerComponent(checkBox));
-                filteredDevices.add(device);
-                newDevicesFound = true;
-            }
-        }
+            // Create a panel for each device to include image and checkbox
+            JPanel deviceItemPanel = new JPanel();
+            deviceItemPanel.setLayout(new BoxLayout(deviceItemPanel, BoxLayout.X_AXIS));
 
-        // Update receivedDevices with only the non-added devices
-        receivedDevices = filteredDevices;
+            // Create image icon and label
+            ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
+            JLabel imageLabel = new JLabel(imageIcon);
+
+            // Create checkbox with device details
+            JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " +
+                    device.getDeviceRoom() + " - " + device.getDescription());
+            checkBoxes.add(checkBox);
+
+            // Add horizontal glue to center components
+            deviceItemPanel.add(Box.createHorizontalGlue());
+            deviceItemPanel.add(imageLabel);
+            deviceItemPanel.add(Box.createRigidArea(new Dimension(10, 0))); // Spacer between image and checkbox
+            deviceItemPanel.add(checkBox);
+            deviceItemPanel.add(Box.createHorizontalGlue());
+
+            // Add the device panel to the main panel
+            devicePanel.add(deviceItemPanel);
+            newDevicesFound = true;
+        }
 
         // If no new devices are found, add a message
         if (!newDevicesFound) {

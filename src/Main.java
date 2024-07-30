@@ -16,9 +16,9 @@ public class Main {
         SharedDB.loadDevices(); // Has to be first!
 
         // Create a new frame
-        JFrame frame = new JFrame("Swing Button Example");
+        JFrame frame = new JFrame("Smart Home Client");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1080, 1024);
+        frame.setSize(640, 800);
 
         CardLayout cardLayout = new CardLayout();
         JPanel cardPanel = new JPanel(cardLayout);
