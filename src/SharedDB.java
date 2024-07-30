@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SharedDB {
-    private static List<HouseholdDevice> devices = new ArrayList<>();
+    private static List<HouseholdDevice> devices;
     public static RestWrapper restWrapper = new RestWrapper();
     private static final String FILE_PATH = "devices.json";
 

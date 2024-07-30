@@ -13,6 +13,8 @@ import java.awt.CardLayout;
 
 public class Main {
     public static void main(String[] args) {
+        SharedDB.loadDevices(); // Has to be first!
+
         // Create a new frame
         JFrame frame = new JFrame("Swing Button Example");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
