@@ -72,10 +72,12 @@ public class MainPanel extends JPanel {
                 JPanel buttonPanel = new JPanel();
                 buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
 
-                JButton actionsDataButton = new JButton("Actions & Data");
+               JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
                     // Placeholder for opening a new panel
-                    JOptionPane.showMessageDialog(this, "Actions & Data for " + device.getDeviceName());
+                    DataActionPanel dataActionPanel = new DataActionPanel(cardLayout,cardPanel,device);
+                    cardPanel.add(dataActionPanel, "DataActionPanel");
+                    cardLayout.show(cardPanel,"DataActionPanel");
                 });
                 buttonPanel.add(actionsDataButton);
 
