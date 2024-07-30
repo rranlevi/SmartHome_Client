@@ -7,6 +7,14 @@ public class DeviceAction {
     private boolean isAvailable;
     private DeviceChannel channel;
 
+    public DeviceAction(String name, String description, Widget widget, boolean isAvailable, DeviceChannel channel) {
+        this.name = name;
+        this.description = description;
+        this.widget = widget;
+        this.isAvailable = isAvailable;
+        this.channel = channel;
+    }
+
     public String getName() {
         return name;
     }

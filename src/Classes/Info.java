@@ -5,6 +5,12 @@ public class Info {
     private String infoValue;
     private String unit;
 
+    public Info(String infoName, String infoValue, String unit) {
+        this.infoName = infoName;
+        this.infoValue = infoValue;
+        this.unit = unit;
+    }
+
     public String getInfoName() {
         return infoName;
     }
