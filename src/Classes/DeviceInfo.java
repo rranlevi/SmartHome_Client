@@ -1,6 +1,6 @@
 package Classes;
 
-class DeviceInfo {
+public class DeviceInfo {
     private Info deviceInfo;
     private DeviceChannel channel;
 

@@ -1,4 +1,4 @@
 package Classes;
 
-class Button extends Widget {
+public class Button extends Widget {
 }

@@ -2,7 +2,7 @@ package Classes;
 
 import java.util.List;
 
-class DeviceActionController {
+public class DeviceActionController {
     private String name;
     private String description;
     private List<DeviceAction> deviceActions;

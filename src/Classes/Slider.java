@@ -1,6 +1,6 @@
 package Classes;
 
-class Slider extends Widget {
+public class Slider extends Widget {
     private String sliderValue;
     private String sliderUnit;
 

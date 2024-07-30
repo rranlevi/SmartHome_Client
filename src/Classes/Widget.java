@@ -1,6 +1,6 @@
 package Classes;
 
-class Widget {
+public class Widget {
     private String text;
 
     public String getText() {

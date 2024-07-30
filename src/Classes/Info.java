@@ -1,6 +1,6 @@
 package Classes;
 
-class Info {
+public class Info {
     private String infoName;
     private String infoValue;
     private String unit;

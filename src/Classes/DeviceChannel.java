@@ -1,6 +1,6 @@
 package Classes;
 
-class DeviceChannel {
+public class DeviceChannel {
     private String channelName;
     private String channelPath;
 

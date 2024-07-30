@@ -2,7 +2,7 @@ package Classes;
 
 import java.util.List;
 
-class DeviceDataController {
+public class DeviceDataController {
     private String name;
     private String description;
     private List<DeviceInfo> deviceData;

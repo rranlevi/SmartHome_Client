@@ -5,32 +5,40 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import java.awt.FlowLayout;
+import java.awt.CardLayout;
 
 public class Main {
     public static void main(String[] args) {
         // Create a new frame
         JFrame frame = new JFrame("Swing Button Example");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(300, 200);
+        frame.setSize(1080, 1024);
 
-        // Create a panel to hold the button
-        JPanel panel = new JPanel();
-        panel.setLayout(new FlowLayout());
+        CardLayout cardLayout = new CardLayout();
+        JPanel cardPanel = new JPanel(cardLayout);
+        SharedDB.devices = new ArrayList<>();
 
-        // Create a new button
-        JButton button = new JButton("Click Me!");
-        JLabel lbl1 = new JLabel("Harel the gay");
-        // Add the button to the panel
-        panel.add(button);
-        panel.add(lbl1);
+        //TODO: Add all panels here and to the cardPanel
+        MainPanel mainPanel = new MainPanel(cardLayout, cardPanel);
+        AddDevicesPanel devicesPanel = new AddDevicesPanel();
+
+        cardPanel.add(mainPanel, "MainPanel");
+        cardPanel.add(devicesPanel, "AddDevicesPanel");
+
         // Add the panel to the frame
-        frame.add(panel);
-
+        frame.add(cardPanel);
         // Make the frame visible
         frame.setVisible(true);
+
+
+
+
+
+
 
     }
 

@@ -6,6 +6,15 @@ public class HouseholdDevice extends Device {
     private DeviceActionController deviceActionController;
     private String deviceRoom;
 
+    public HouseholdDevice(String deviceName, String deviceRoom, String description, DeviceDataController deviceData, DeviceActionController deviceController, String deviceImage) {
+        this.setDeviceName(deviceName);
+        this.setDeviceRoom(deviceRoom);
+        this.setDescription(description);
+        this.setDeviceDataController(deviceData);
+        this.setDeviceActionController(deviceController);
+        this.setDeviceImage(deviceImage);
+    }
+
     public String getDeviceImage() {
         return deviceImage;
     }

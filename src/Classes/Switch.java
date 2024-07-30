@@ -1,6 +1,6 @@
 package Classes;
 
-class Switch extends Widget {
+public class Switch extends Widget {
     private boolean switchIsOn;
 
     public boolean isSwitchIsOn() {

@@ -1,6 +1,6 @@
 package Classes;
 
-class DeviceAction {
+public class DeviceAction {
     private String name;
     private String description;
     private Widget widget;
