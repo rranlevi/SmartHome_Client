@@ -3,4 +3,5 @@ import java.util.List;
 
 public class SharedDB {
     public static List<HouseholdDevice> devices;
+    public static RestWrapper restWrapper = new RestWrapper();
 }

@@ -20,7 +20,17 @@ public class Main {
 
         CardLayout cardLayout = new CardLayout();
         JPanel cardPanel = new JPanel(cardLayout);
-        SharedDB.devices = new ArrayList<>();
+
+        // Test GET request for devices
+        RequestStatus getDiscDevicesStatus = SharedDB.restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
+        if (getDiscDevicesStatus.isSuccess()) {
+            Gson gson = new Gson();
+            Type listType = new TypeToken<List<HouseholdDevice>>() {}.getType();
+            SharedDB.devices = gson.fromJson(getDiscDevicesStatus.getMessage(), listType);
+        } else {
+            System.out.println("GET Request Failed: " + getDiscDevicesStatus.getMessage());
+        }
+
 
         //TODO: Add all panels here and to the cardPanel
         MainPanel mainPanel = new MainPanel(cardLayout, cardPanel);
@@ -41,30 +51,4 @@ public class Main {
 
 
     }
-
-//        RestWrapper restWrapper = new RestWrapper();
-//
-//        // Test POST request
-//        RequestStatus postStatus = restWrapper.sendPost(RestPath.POST_PATH, "Test Payload");
-//        System.out.println("POST Request Success: " + postStatus.isSuccess());
-//        System.out.println("POST Request Message: " + postStatus.getMessage());
-//
-//        // Test GET request
-//        RequestStatus getStatus = restWrapper.sendGet(RestPath.GET_PATH);
-//        System.out.println("GET Request Success: " + getStatus.isSuccess());
-//        System.out.println("GET Request Message: " + getStatus.getMessage());
-//
-//        // Test GET request for devices
-//        RequestStatus getDiscDevicesStatus = restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
-//        if (getStatus.isSuccess()) {
-//            Gson gson = new Gson();
-//            Type listType = new TypeToken<List<HouseholdDevice>>() {}.getType();
-//            List<HouseholdDevice> devices = gson.fromJson(getDiscDevicesStatus.getMessage(), listType);
-//
-//            for (HouseholdDevice device : devices) {
-//                System.out.println("Device: " + device.getDeviceName() + ", Room: " + device.getDeviceRoom());
-//            }
-//        } else {
-//            System.out.println("GET Request Failed: " + getDiscDevicesStatus.getMessage());
-//        }
 }
