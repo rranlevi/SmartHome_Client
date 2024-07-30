@@ -61,5 +61,8 @@ public class SharedDB {
                 System.out.println(e.getMessage());
             }
         }
+        else {
+            devices = new ArrayList<HouseholdDevice>();
+        }
     }
 }
