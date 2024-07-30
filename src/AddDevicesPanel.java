@@ -34,6 +34,7 @@ public class AddDevicesPanel extends JPanel {
         devicePanel.setLayout(new BoxLayout(devicePanel, BoxLayout.Y_AXIS));
         JScrollPane scrollPane = new JScrollPane(devicePanel);
         add(scrollPane, BorderLayout.CENTER);
+        // Test
 
         // Panel for buttons
         buttonPanel = new JPanel();
