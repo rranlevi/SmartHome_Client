@@ -7,13 +7,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
-
 import Classes.HouseholdDevice;
 import Classes.RequestStatus;
 import Enums.RestPath;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-
 import java.lang.reflect.Type;
 
 public class AddDevicesPanel extends JPanel {
@@ -58,10 +56,11 @@ public class AddDevicesPanel extends JPanel {
         devicePanel.repaint();
     }
 
+    // Refresh the device list in the frame
     private void refreshDeviceList() {
         showLoadingIcon();
 
-        // Create a SwingWorker to fetch devices after the delay
+        // Create a SwingWorker to fetch devices after the delay, it handles background UI tasks
         SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
             @Override
             protected List<HouseholdDevice> doInBackground() throws Exception {
@@ -98,6 +97,7 @@ public class AddDevicesPanel extends JPanel {
         worker.execute();
     }
 
+    // Display device list in the frame
     private void displayDeviceList() {
         // Clear existing device checkboxes
         devicePanel.removeAll();
@@ -158,6 +158,7 @@ public class AddDevicesPanel extends JPanel {
         return devices;
     }
 
+    // Handle devices that were check-boxed
     private List<HouseholdDevice> getSelectedDevices() {
         List<HouseholdDevice> selectedDevices = new ArrayList<>();
         for (int i = 0; i < checkBoxes.size(); i++) {
@@ -168,6 +169,7 @@ public class AddDevicesPanel extends JPanel {
         return selectedDevices;
     }
 
+    // Add devices button
     private JButton createAddButton() {
         JButton addButton = new JButton("Add Selected Devices");
         addButton.addActionListener(new ActionListener() {
@@ -187,6 +189,7 @@ public class AddDevicesPanel extends JPanel {
         return addButton;
     }
 
+    // Go back to main menu button
     private JButton createGoBackButton() {
         JButton goBackButton = new JButton("Go back to main screen");
         goBackButton.addActionListener(new ActionListener() {
@@ -198,6 +201,7 @@ public class AddDevicesPanel extends JPanel {
         return goBackButton;
     }
 
+    // Refresh button
     private JButton createRefreshButton() {
         JButton refreshButton = new JButton("Refresh devices");
         refreshButton.addActionListener(new ActionListener() {
@@ -209,6 +213,7 @@ public class AddDevicesPanel extends JPanel {
         return refreshButton;
     }
 
+    // Component to center things in the frame
     private Component centerComponent(JComponent component) {
         Box box = Box.createHorizontalBox();
         box.add(Box.createHorizontalGlue());
