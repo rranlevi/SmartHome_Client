@@ -55,7 +55,7 @@ public class AddDevicesPanel extends JPanel {
         // Fetch devices and filter out existing ones
         receivedDevices = fetchDevicesFromServer();
         Set<String> existingDeviceIds = new HashSet<>();
-        for (HouseholdDevice device : SharedDB.devices) {
+        for (HouseholdDevice device : SharedDB.getDevices()) {
             existingDeviceIds.add(device.getDeviceId());
         }
 
@@ -115,7 +115,9 @@ public class AddDevicesPanel extends JPanel {
                 List<HouseholdDevice> selectedDevices = getSelectedDevices();
 
                 // Add the selected devices to SharedDB.devices
-                SharedDB.devices.addAll(selectedDevices);
+                for (HouseholdDevice device : selectedDevices) {
+                    SharedDB.addDevice(device);
+                }
 
                 // Refresh the device list to remove added devices
                 refreshDeviceList();
@@ -154,4 +156,3 @@ public class AddDevicesPanel extends JPanel {
         return box;
     }
 }
-
