@@ -2,14 +2,9 @@ import Classes.Device;
 
 import javax.swing.*;
 import java.awt.*;
-
 import Classes.*;
-
 import java.awt.event.*;
-import java.util.*;
-
 import java.util.List;
-
 
 public class MainPanel extends JPanel {
     private CardLayout cardLayout;
@@ -27,12 +22,17 @@ public class MainPanel extends JPanel {
 
         devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));
+
         this.addComponentListener(new ComponentAdapter() {
-            public void componentShown(ComponentEvent e){
+            public void componentShown(ComponentEvent e) {
                 refreshDevicesPanel();
             }
         });
-        add(new JScrollPane(devicesPanel), BorderLayout.CENTER);
+
+        JScrollPane scrollPane = new JScrollPane(devicesPanel);
+        scrollPane.getViewport().setOpaque(false); // Make sure background is clear
+        add(scrollPane, BorderLayout.CENTER);
+
         refreshDevicesPanel();
     }
 
@@ -40,47 +40,37 @@ public class MainPanel extends JPanel {
         devicesPanel.removeAll();
 
         if (SharedDB.getDevices().isEmpty()) {
+            // Center the "No devices connected" message
             JLabel noDevicesLabel = new JLabel("No devices connected");
-            noDevicesLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            noDevicesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            devicesPanel.add(Box.createVerticalGlue());
             devicesPanel.add(noDevicesLabel);
+            devicesPanel.add(Box.createVerticalGlue());
         } else {
+            devicesPanel.add(Box.createVerticalGlue());
             for (HouseholdDevice device : SharedDB.getDevices()) {
-                JPanel devicePanel = new JPanel(new GridBagLayout());
-                GridBagConstraints gbc = new GridBagConstraints();
-                gbc.insets = new Insets(5, 5, 5, 5); // Add padding
-                gbc.fill = GridBagConstraints.HORIZONTAL;
+                JPanel devicePanel = new JPanel(new BorderLayout());
+                devicePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
                 // Add image
                 ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
                 JLabel imageLabel = new JLabel(imageIcon);
-                gbc.gridx = 0;
-                gbc.gridy = 0;
-                gbc.gridheight = 2;
-                gbc.weightx = 0;
-                devicePanel.add(imageLabel, gbc);
+                devicePanel.add(imageLabel, BorderLayout.WEST);
 
                 // Add device info
-                JLabel deviceInfo = new JLabel(device.getDeviceName() + " | Room: " + device.getDeviceRoom() + " | Description: " + device.getDescription());
-                gbc.gridx = 1;
-                gbc.gridy = 0;
-                gbc.gridheight = 1;
-                gbc.weightx = 1;
-                devicePanel.add(deviceInfo, gbc);
+                JLabel deviceInfo = new JLabel("<html>" + device.getDeviceName() + "<br>Room: " + device.getDeviceRoom() + "<br>Description: " + device.getDescription() + "</html>");
+                deviceInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                devicePanel.add(deviceInfo, BorderLayout.CENTER);
 
                 // Add buttons
-                gbc.gridx = 1;
-                gbc.gridy = 1;
-                gbc.gridheight = 1;
-                gbc.anchor = GridBagConstraints.WEST;
-
                 JPanel buttonPanel = new JPanel();
-                buttonPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+                buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
-               JButton actionsDataButton = new JButton("Actions & Data");
+                JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
-                    DataActionPanel dataActionPanel = new DataActionPanel(cardLayout,cardPanel,device);
+                    DataActionPanel dataActionPanel = new DataActionPanel(cardLayout, cardPanel, device);
                     cardPanel.add(dataActionPanel, "DataActionPanel");
-                    cardLayout.show(cardPanel,"DataActionPanel");
+                    cardLayout.show(cardPanel, "DataActionPanel");
                 });
                 buttonPanel.add(actionsDataButton);
 
@@ -91,13 +81,24 @@ public class MainPanel extends JPanel {
                 });
                 buttonPanel.add(removeButton);
 
-                devicePanel.add(buttonPanel, gbc);
+                devicePanel.add(buttonPanel, BorderLayout.EAST);
 
-                devicesPanel.add(devicePanel);
+                devicePanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, devicePanel.getMinimumSize().height));
+
+                devicesPanel.add(centerComponent(devicePanel));
             }
+            devicesPanel.add(Box.createVerticalGlue());
         }
 
         devicesPanel.revalidate();
         devicesPanel.repaint();
+    }
+
+    private Component centerComponent(JComponent component) {
+        Box box = Box.createHorizontalBox();
+        box.add(Box.createHorizontalGlue());
+        box.add(component);
+        box.add(Box.createHorizontalGlue());
+        return box;
     }
 }
