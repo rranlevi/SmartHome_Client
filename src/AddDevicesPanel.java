@@ -34,7 +34,6 @@ public class AddDevicesPanel extends JPanel {
         devicePanel.setLayout(new BoxLayout(devicePanel, BoxLayout.Y_AXIS));
         JScrollPane scrollPane = new JScrollPane(devicePanel);
         add(scrollPane, BorderLayout.CENTER);
-        // Test
 
         // Panel for buttons
         buttonPanel = new JPanel();
@@ -62,14 +61,19 @@ public class AddDevicesPanel extends JPanel {
 
         // Create checkboxes for each non-existing device and add them
         boolean newDevicesFound = false;
+        List<HouseholdDevice> filteredDevices = new ArrayList<>();
         for (HouseholdDevice device : receivedDevices) {
             if (!existingDeviceIds.contains(device.getDeviceId())) {
                 JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " + device.getDescription());
                 checkBoxes.add(checkBox);
                 devicePanel.add(centerComponent(checkBox));
+                filteredDevices.add(device);
                 newDevicesFound = true;
             }
         }
+
+        // Update receivedDevices with only the non-added devices
+        receivedDevices = filteredDevices;
 
         // If no new devices are found, add a message
         if (!newDevicesFound) {
