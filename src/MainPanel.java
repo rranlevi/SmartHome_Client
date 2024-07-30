@@ -4,11 +4,12 @@ import javax.swing.*;
 import java.awt.*;
 
 import Classes.*;
+
+import java.awt.event.*;
 import java.util.*;
 
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
+
 
 public class MainPanel extends JPanel {
     private CardLayout cardLayout;
@@ -26,9 +27,12 @@ public class MainPanel extends JPanel {
 
         devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));
-
+        this.addComponentListener(new ComponentAdapter() {
+            public void componentShown(ComponentEvent e){
+                refreshDevicesPanel();
+            }
+        });
         add(new JScrollPane(devicesPanel), BorderLayout.CENTER);
-
         refreshDevicesPanel();
     }
 
