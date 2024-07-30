@@ -3,6 +3,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import Classes.HouseholdDevice;
@@ -12,6 +13,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.Set;
 
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
@@ -72,7 +74,17 @@ public class AddDevicesPanel extends JPanel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 List<HouseholdDevice> selectedDevices = getSelectedDevices();
-                // Add selected devices to SharedDB.devices
+
+                // Create a set of existing deviceIds from SharedDB.devices
+                Set<String> existingDeviceIds = new HashSet<>();
+                for (HouseholdDevice existingDevice : SharedDB.devices) {
+                    existingDeviceIds.add(existingDevice.getDeviceId());
+                }
+
+                // Iterate over selectedDevices and remove the ones already in SharedDB.devices
+                selectedDevices.removeIf(newDevice -> existingDeviceIds.contains(newDevice.getDeviceId()));
+
+                // Add the remaining selected devices to SharedDB.devices
                 SharedDB.devices.addAll(selectedDevices);
 
                 // For confirmation, print the selected devices
