@@ -1,7 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 
 import Classes.*;
 
@@ -9,23 +8,27 @@ import Classes.*;
 public class DataActionPanel extends JPanel {
     private final CardLayout cardLayout;
     private final JPanel cardPanel;
-    private static final String SERVER_PATH = "http://127.0.0.1";
-
+    private final HouseholdDevice device;
 
     public DataActionPanel(CardLayout cardLayout, JPanel cardPanel, HouseholdDevice device) {
         this.cardLayout = cardLayout;
         this.cardPanel = cardPanel;
+        this.device = device;
 
         setLayout(new BorderLayout());
+        initializeComponents();
+    }
+
+    private void initializeComponents() {
+        removeAll();
 
         // Initialize and add title section
         JLabel titleLabel = createTitle();
         add(titleLabel, BorderLayout.NORTH);
 
         // Initialize and add central container with data and action sections
-        JPanel centralPanel = createCentralPanel(device);
+        JPanel centralPanel = createCentralPanel();
         centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
-        add(centralPanel, BorderLayout.CENTER);
         JScrollPane scrollPane = new JScrollPane(centralPanel);
         add(scrollPane, BorderLayout.CENTER);
 
@@ -35,6 +38,9 @@ public class DataActionPanel extends JPanel {
         buttonPanel.setLayout(new FlowLayout());
         buttonPanel.add(returnButton);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        revalidate();
+        repaint();
     }
 
     private JLabel createTitle() {
@@ -44,21 +50,21 @@ public class DataActionPanel extends JPanel {
         return titleLabel;
     }
 
-    private JPanel createCentralPanel(HouseholdDevice device) {
+    private JPanel createCentralPanel() {
         JPanel centralPanel = new JPanel();
         centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
 
-        JPanel dataSection = createDataSection(device);
+        JPanel dataSection = createDataSection();
         centralPanel.add(dataSection);
         centralPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Adding space between sections
 
-        JPanel actionSection = createActionSection(device);
+        JPanel actionSection = createActionSection();
         centralPanel.add(actionSection);
 
         return centralPanel;
     }
 
-    private JPanel createDataSection(HouseholdDevice device) {
+    private JPanel createDataSection() {
         JPanel dataSection = new JPanel(new BorderLayout());
 
         JLabel dataTitle = new JLabel("Data");
@@ -79,7 +85,7 @@ public class DataActionPanel extends JPanel {
         return dataSection;
     }
 
-    private JPanel createActionSection(HouseholdDevice device) {
+    private JPanel createActionSection() {
         JPanel actionSection = new JPanel(new BorderLayout());
 
         JLabel actionTitle = new JLabel("Actions");
@@ -122,7 +128,7 @@ public class DataActionPanel extends JPanel {
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
                         RequestStatus temp = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
-                        switch (temp.getMessage()){
+                        switch (temp.getMessage()) {
                             case "On":
                                 actionSwitch.setSelected(true);
                                 break;
@@ -130,14 +136,13 @@ public class DataActionPanel extends JPanel {
                                 actionSwitch.setSelected(false);
                                 break;
                         }
-                        actionSwitch.addItemListener(new ItemListener() {
-                            public void itemStateChanged(ItemEvent ev) {
-                                if (ev.getStateChange() == ItemEvent.SELECTED) {
-                                    SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "On");
-                                } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
-                                    SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "Off");
-                                }
+                        actionSwitch.addItemListener(ev -> {
+                            if (ev.getStateChange() == ItemEvent.SELECTED) {
+                                SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "On");
+                            } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
+                                SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "Off");
                             }
+                            initializeComponents();
                         });
                         actionPanel.add(actionSwitch);
                         break;
