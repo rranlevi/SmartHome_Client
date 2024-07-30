@@ -41,12 +41,17 @@ public class MainPanel extends JPanel {
             devicesPanel.add(noDevicesLabel);
         } else {
             for (HouseholdDevice device : SharedDB.devices) {
+                // Decode the Base64 image string to ImageIcon and scale it
+
                 JPanel devicePanel = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.fill = GridBagConstraints.HORIZONTAL;
                 gbc.weightx = 1;
                 gbc.gridx = 0;
                 gbc.gridy = 0;
+                ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(),34,34);
+                JLabel imageLabel = new JLabel(imageIcon);
+                devicePanel.add(imageLabel, BorderLayout.WEST);
 
                 JLabel deviceInfo = new JLabel(device.getDeviceName() + " | Room: " + device.getDeviceRoom() + " | Description: " + device.getDescription());
                 devicePanel.add(deviceInfo, gbc);
@@ -61,7 +66,9 @@ public class MainPanel extends JPanel {
                 JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
                     // Placeholder for opening a new panel
-                    JOptionPane.showMessageDialog(this, "Actions & Data for " + device.getDeviceName());
+                    DataActionPanel dataActionPanel = new DataActionPanel(cardLayout,cardPanel,device);
+                    cardPanel.add(dataActionPanel, "DataActionPanel");
+                    cardLayout.show(cardPanel,"DataActionPanel");
                 });
                 buttonPanel.add(actionsDataButton);
 
