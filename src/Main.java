@@ -23,22 +23,22 @@ public class Main {
         CardLayout cardLayout = new CardLayout();
         JPanel cardPanel = new JPanel(cardLayout);
 
-//        // Test GET request for devices
-//        RequestStatus getDiscDevicesStatus = SharedDB.restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
-//        if (getDiscDevicesStatus.isSuccess()) {
-//            Gson gson = new Gson();
-//            Type listType = new TypeToken<List<HouseholdDevice>>() {}.getType();
-//            SharedDB.devices = gson.fromJson(getDiscDevicesStatus.getMessage(), listType);
-//        } else {
-//            System.out.println("GET Request Failed: " + getDiscDevicesStatus.getMessage());
-//        }
+       // Test GET request for devices
+        RequestStatus getDiscDevicesStatus = SharedDB.restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
+       if (getDiscDevicesStatus.isSuccess()) {
+           Gson gson = new Gson();
+            Type listType = new TypeToken<List<HouseholdDevice>>() {}.getType();
+           SharedDB.setDevices(gson.fromJson(getDiscDevicesStatus.getMessage(), listType)) ;
+       } else {
+           System.out.println("GET Request Failed: " + getDiscDevicesStatus.getMessage());
+       }
 
         //TODO: Add all panels here and to the cardPanel
         MainPanel mainPanel = new MainPanel(cardLayout, cardPanel);
-        AddDevicesPanel devicesPanel = new AddDevicesPanel();
+    //    AddDevicesPanel devicesPanel = new AddDevicesPanel();
 
         cardPanel.add(mainPanel, "MainPanel");
-        cardPanel.add(devicesPanel, "AddDevicesPanel");
+       // cardPanel.add(devicesPanel, "AddDevicesPanel");
 
         // Add the panel to the frame
         frame.add(cardPanel);
