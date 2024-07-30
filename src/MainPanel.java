@@ -35,12 +35,12 @@ public class MainPanel extends JPanel {
     private void refreshDevicesPanel() {
         devicesPanel.removeAll();
 
-        if (SharedDB.devices.isEmpty()) {
+        if (SharedDB.getDevices().isEmpty()) {
             JLabel noDevicesLabel = new JLabel("No devices connected");
             noDevicesLabel.setHorizontalAlignment(SwingConstants.CENTER);
             devicesPanel.add(noDevicesLabel);
         } else {
-            for (HouseholdDevice device : SharedDB.devices) {
+            for (HouseholdDevice device : SharedDB.getDevices()) {
                 JPanel devicePanel = new JPanel(new GridBagLayout());
                 GridBagConstraints gbc = new GridBagConstraints();
                 gbc.insets = new Insets(5, 5, 5, 5); // Add padding
@@ -74,7 +74,6 @@ public class MainPanel extends JPanel {
 
                JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
-                    // Placeholder for opening a new panel
                     DataActionPanel dataActionPanel = new DataActionPanel(cardLayout,cardPanel,device);
                     cardPanel.add(dataActionPanel, "DataActionPanel");
                     cardLayout.show(cardPanel,"DataActionPanel");
@@ -83,7 +82,7 @@ public class MainPanel extends JPanel {
 
                 JButton removeButton = new JButton("Remove");
                 removeButton.addActionListener(e -> {
-                    SharedDB.devices.remove(device);
+                    SharedDB.removeDevice(device.getDeviceId());
                     refreshDevicesPanel(); // Refresh the panel after removal
                 });
                 buttonPanel.add(removeButton);
