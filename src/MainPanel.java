@@ -18,7 +18,10 @@ public class MainPanel extends JPanel {
 
         JButton button = new JButton("Add New Devices");
         button.addActionListener(_ -> cardLayout.show(cardPanel, "AddDevicesPanel"));
-        add(button, BorderLayout.NORTH);
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout());
+        buttonPanel.add(button);
+        add(buttonPanel, BorderLayout.SOUTH);
 
         devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));

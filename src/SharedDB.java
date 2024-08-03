@@ -54,7 +54,7 @@ public class SharedDB {
     // Load devices from a JSON file
     public static void loadDevices() {
         if (Files.exists(Paths.get(FILE_PATH))) {
-            Gson gson = new Gson();
+            Gson gson = GsonUtil.createGson();
             try (FileReader reader = new FileReader(FILE_PATH)) {
                 Type listType = new TypeToken<ArrayList<HouseholdDevice>>(){}.getType();
                 devices = gson.fromJson(reader, listType);

@@ -97,16 +97,26 @@ public class DataActionPanel extends JPanel {
         actionPanel.setLayout(new BoxLayout(actionPanel, BoxLayout.Y_AXIS));
         for (DeviceAction action : device.getDeviceActionController().getDeviceActions()) {
             if (action.isAvailable()) {
-                switch (action.getWidget().getText()) {
+                switch (action.getWidget().getClass().getSimpleName()) {
                     case "Dropdown":
                         JLabel actionComboboxLabel = new JLabel(action.getName());
                         JComboBox actionCombobox = new JComboBox();
                         actionComboboxLabel.setToolTipText(action.getDescription());
+                        actionCombobox.setMaximumSize(new Dimension(Integer.MAX_VALUE, actionCombobox.getPreferredSize().height));
                         actionComboboxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                         actionCombobox.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                        for(String item : ((Dropdown) action.getWidget()).getListOptions()){
+                            actionCombobox.addItem(item);
+                        }
+                        RequestStatus dropDownData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        actionCombobox.setSelectedItem(dropDownData.getMessage());
                         //TODO: add action
                         actionCombobox.addActionListener(_ -> {
-                            //SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), action.p);
+                            String selectedItem = (String) actionCombobox.getSelectedItem();
+                            SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), selectedItem);
+                            showLoadingIcon(); // For simulating server response
+                            initializeComponents();
                         });
                         actionPanel.add(actionComboboxLabel);
                         actionPanel.add(actionCombobox);
@@ -114,21 +124,49 @@ public class DataActionPanel extends JPanel {
 
                     case "Slider":
                         JLabel actionSliderLabel = new JLabel(action.getName());
-                        JSlider actionSlider = new JSlider();
+                        JSlider actionSlider;
+                        JLabel sliderValueLabel = new JLabel();
+                        JButton sendButton = new JButton("Send");
+
+                        // Check if description contains "Temp" and set slider range accordingly
+                        if (action.getName().contains("Temp")) {
+                            actionSlider = new JSlider(16, 30);
+                        } else {
+                            actionSlider = new JSlider(); // Default slider range
+                        }
+
                         actionSliderLabel.setToolTipText(action.getDescription());
                         actionSliderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                         actionSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        //TODO: add action with send button
+                        sliderValueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        sendButton.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                        // Update the slider value label when the slider is moved
+                        RequestStatus sliderData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
+                        sliderValueLabel.setText("Value: " + actionSlider.getValue());
+                        actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
+
+                        // Send button action to send the slider value
+                        sendButton.addActionListener(_ -> {
+                            SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), String.valueOf(actionSlider.getValue()));
+                            showLoadingIcon(); // For simulating server response
+                            initializeComponents();
+                            sliderValueLabel.setText("Value: " + actionSlider.getValue());
+                        });
+
                         actionPanel.add(actionSliderLabel);
                         actionPanel.add(actionSlider);
+                        actionPanel.add(sliderValueLabel);
+                        actionPanel.add(sendButton);
                         break;
 
                     case "Switch":
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        RequestStatus temp = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
-                        switch (temp.getMessage()) {
+                        RequestStatus switchData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        switch (switchData.getMessage()) {
                             case "On":
                                 actionSwitch.setSelected(true);
                                 break;
@@ -142,6 +180,7 @@ public class DataActionPanel extends JPanel {
                             } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
                                 SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "Off");
                             }
+                            showLoadingIcon(); // For simulating server response
                             initializeComponents();
                         });
                         actionPanel.add(actionSwitch);
@@ -160,4 +199,46 @@ public class DataActionPanel extends JPanel {
         returnButton.addActionListener(_ -> cardLayout.show(cardPanel, "MainPanel"));
         return returnButton;
     }
-}
+
+    private void showLoadingIcon() {
+        // Create an overlay panel
+        JPanel overlayPanel = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                super.paintComponent(g);
+                g.setColor(new Color(255, 255, 255, 255)); // Fully opaque
+                g.fillRect(0, 0, getWidth(), getHeight());
+            }
+        };
+        overlayPanel.setOpaque(false);
+        overlayPanel.setLayout(new GridBagLayout());
+
+        // Add the loading icon to the overlay panel
+        JLabel loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
+        overlayPanel.add(loadingLabel);
+
+        // Add the overlay panel to the frame's layered pane
+        JLayeredPane layeredPane = getRootPane().getLayeredPane();
+        overlayPanel.setBounds(0, 0, getRootPane().getWidth(), getRootPane().getHeight());
+        layeredPane.add(overlayPanel, JLayeredPane.MODAL_LAYER);
+
+        // Repaint the frame to ensure the overlay is visible
+        revalidate();
+        repaint();
+
+        // Remove the overlay panel after the delay
+        new Thread(() -> {
+            try {
+                Thread.sleep(200); // Simulate loading delay
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            } finally {
+                SwingUtilities.invokeLater(() -> {
+                    layeredPane.remove(overlayPanel);
+                    revalidate();
+                    repaint();
+                });
+            }
+        }).start();
+    }
+} // End of DataActionPanel Class

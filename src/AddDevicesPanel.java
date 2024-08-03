@@ -172,7 +172,7 @@ public class AddDevicesPanel extends JPanel {
 
         RequestStatus getDiscDevicesStatus = SharedDB.restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
         if (getDiscDevicesStatus.isSuccess()) {
-            Gson gson = new Gson();
+            Gson gson = GsonUtil.createGson();
             Type listType = new TypeToken<List<HouseholdDevice>>() {}.getType();
             devices = gson.fromJson(getDiscDevicesStatus.getMessage(), listType);
         } else {
