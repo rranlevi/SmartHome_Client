@@ -68,22 +68,52 @@ public class DataActionPanel extends JPanel {
         JPanel dataSection = new JPanel(new BorderLayout());
 
         JLabel dataTitle = new JLabel("Data");
-        dataTitle.setFont(new Font("Arial", Font.BOLD, 16));
+        dataTitle.setFont(new Font("Arial", Font.BOLD, 20)); // Increased font size
         dataTitle.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         dataSection.add(dataTitle, BorderLayout.NORTH);
 
         JPanel dataPanel = new JPanel();
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
+
         for (DeviceInfo data : device.getDeviceDataController().getDeviceData()) {
             RequestStatus requestStatus = SharedDB.restWrapper.sendGet(data.getChannel().getChannelPath());
-            JLabel dataLabel = new JLabel(data.getDeviceInfo().getInfoName() + ": " + requestStatus.getMessage());
+
+            // Create a panel for each data item
+            JPanel dataItemPanel = new JPanel();
+            dataItemPanel.setLayout(new BoxLayout(dataItemPanel, BoxLayout.Y_AXIS)); // Changed to vertical layout
+            dataItemPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Increased spacing between items
+
+            // Style for the info name
+            JLabel infoNameLabel = new JLabel(data.getDeviceInfo().getInfoName());
+            infoNameLabel.setFont(new Font("Arial", Font.BOLD, 18)); // Larger font size
+            infoNameLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Square border
+            infoNameLabel.setOpaque(true);
+            infoNameLabel.setBackground(new Color(230, 230, 230)); // Light gray background
+            infoNameLabel.setPreferredSize(new Dimension(200, 40)); // Increased size for square look
+            infoNameLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center the text inside the square
+            infoNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            // Style for the message
+            JLabel dataLabel = new JLabel(requestStatus.getMessage());
+            dataLabel.setFont(new Font("Arial", Font.PLAIN, 18)); // Larger font size
             dataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            dataPanel.add(dataLabel);
+            dataLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // Adding some space below the info name
+
+            // Add the info name and message to the data item panel
+            dataItemPanel.add(infoNameLabel);
+            dataItemPanel.add(dataLabel);
+
+            // Add the data item panel to the main data panel
+            dataPanel.add(dataItemPanel);
         }
+
         dataSection.add(dataPanel, BorderLayout.CENTER);
 
         return dataSection;
     }
+
+
+
 
     private JPanel createActionSection() {
         JPanel actionSection = new JPanel(new BorderLayout());
@@ -111,7 +141,6 @@ public class DataActionPanel extends JPanel {
                         }
                         RequestStatus dropDownData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                         actionCombobox.setSelectedItem(dropDownData.getMessage());
-                        //TODO: add action
                         actionCombobox.addActionListener(_ -> {
                             String selectedItem = (String) actionCombobox.getSelectedItem();
                             SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), selectedItem);
@@ -166,14 +195,25 @@ public class DataActionPanel extends JPanel {
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
                         RequestStatus switchData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
+
                         switch (switchData.getMessage()) {
                             case "On":
                                 actionSwitch.setSelected(true);
+                                if (action.getName().equals("Power")) {
+                                    // Disable the default selected color
+                                    actionSwitch.setContentAreaFilled(false);
+                                    actionSwitch.setOpaque(true);
+                                    actionSwitch.setBackground(Color.GREEN);
+                                }
                                 break;
                             case "Off":
                                 actionSwitch.setSelected(false);
+                                if (action.getName().equals("Power")) {
+                                    actionSwitch.setBackground(Color.RED);
+                                }
                                 break;
                         }
+
                         actionSwitch.addItemListener(ev -> {
                             if (ev.getStateChange() == ItemEvent.SELECTED) {
                                 SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "On");
