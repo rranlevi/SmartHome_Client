@@ -5,14 +5,16 @@ public class DeviceAction {
     private String description;
     private Widget widget;
     private boolean isAvailable;
-    private DeviceChannel channel;
+    private DeviceChannel actionChannel;
+    private DeviceChannel dataChannel;
 
-    public DeviceAction(String name, String description, Widget widget, boolean isAvailable, DeviceChannel channel) {
+    public DeviceAction(String name, String description, Widget widget, boolean isAvailable, DeviceChannel actionChannel, DeviceChannel dataChannel) {
         this.name = name;
         this.description = description;
         this.widget = widget;
         this.isAvailable = isAvailable;
-        this.channel = channel;
+        this.actionChannel = actionChannel;
+        this.dataChannel = dataChannel;
     }
 
     public String getName() {
@@ -47,12 +49,20 @@ public class DeviceAction {
         isAvailable = available;
     }
 
-    public DeviceChannel getChannel() {
-        return channel;
+    public DeviceChannel getActionChannel() {
+        return actionChannel;
     }
 
-    public void setChannel(DeviceChannel channel) {
-        this.channel = channel;
+    public void setActionChannel(DeviceChannel actionChannel) {
+        this.actionChannel = actionChannel;
+    }
+
+    public DeviceChannel getDataChannel() {
+        return dataChannel;
+    }
+
+    public void setDataChannel(DeviceChannel dataChannel) {
+        this.dataChannel = dataChannel;
     }
 
 }

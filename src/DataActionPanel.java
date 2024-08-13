@@ -109,12 +109,12 @@ public class DataActionPanel extends JPanel {
                         for(String item : ((Dropdown) action.getWidget()).getListOptions()){
                             actionCombobox.addItem(item);
                         }
-                        RequestStatus dropDownData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        RequestStatus dropDownData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                         actionCombobox.setSelectedItem(dropDownData.getMessage());
                         //TODO: add action
                         actionCombobox.addActionListener(_ -> {
                             String selectedItem = (String) actionCombobox.getSelectedItem();
-                            SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), selectedItem);
+                            SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), selectedItem);
                             showLoadingIcon(); // For simulating server response
                             initializeComponents();
                         });
@@ -142,14 +142,14 @@ public class DataActionPanel extends JPanel {
                         sendButton.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                         // Update the slider value label when the slider is moved
-                        RequestStatus sliderData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        RequestStatus sliderData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                         actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
                         sliderValueLabel.setText("Value: " + actionSlider.getValue());
                         actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
 
                         // Send button action to send the slider value
                         sendButton.addActionListener(_ -> {
-                            SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), String.valueOf(actionSlider.getValue()));
+                            SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), String.valueOf(actionSlider.getValue()));
                             showLoadingIcon(); // For simulating server response
                             initializeComponents();
                             sliderValueLabel.setText("Value: " + actionSlider.getValue());
@@ -165,7 +165,7 @@ public class DataActionPanel extends JPanel {
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        RequestStatus switchData = SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "GET_DATA");
+                        RequestStatus switchData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                         switch (switchData.getMessage()) {
                             case "On":
                                 actionSwitch.setSelected(true);
@@ -176,9 +176,9 @@ public class DataActionPanel extends JPanel {
                         }
                         actionSwitch.addItemListener(ev -> {
                             if (ev.getStateChange() == ItemEvent.SELECTED) {
-                                SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "On");
+                                SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "On");
                             } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
-                                SharedDB.restWrapper.sendPost(action.getChannel().getChannelPath(), "Off");
+                                SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "Off");
                             }
                             showLoadingIcon(); // For simulating server response
                             initializeComponents();
