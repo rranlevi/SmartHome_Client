@@ -3,7 +3,9 @@ import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.util.TimerTask;
+
 import Classes.*;
+
 import java.util.Timer;
 
 
@@ -12,7 +14,8 @@ public class DataActionPanel extends JPanel {
     private final JPanel cardPanel;
     private final HouseholdDevice device;
     private static Integer counter = 1;
-    JLabel dataLabel;
+    private JLabel dataLabel;
+    private Timer timer = new Timer();
 
 
     public DataActionPanel(CardLayout cardLayout, JPanel cardPanel, HouseholdDevice device) {
@@ -365,11 +368,15 @@ public class DataActionPanel extends JPanel {
                         break;
 
                     case "CameraStream":
-                        Timer timer = new Timer();
+                        // Cancel the previous timer
+                        timer.cancel();
+
+                        // Create a new timer and schedule the task
+                        timer = new Timer();
                         timer.scheduleAtFixedRate(new TimerTask() {
                             @Override
                             public void run() {
-                                //refresh image here
+                                // Refresh image here
                                 refreshImage(action.getActionChannel().getChannelPath(), action.getDataChannel().getChannelPath());
                             }
                         }, 50, 50); // every 50 milliseconds
@@ -387,7 +394,10 @@ public class DataActionPanel extends JPanel {
     private JButton createReturnButton() {
         JButton returnButton = new JButton("Go back to main screen");
 
-        returnButton.addActionListener(_ -> cardLayout.show(cardPanel, "MainPanel"));
+        returnButton.addActionListener(_ -> {
+
+            cardLayout.show(cardPanel, "MainPanel");
+        });
         return returnButton;
     }
 
@@ -438,8 +448,7 @@ public class DataActionPanel extends JPanel {
             SharedDB.restWrapper.sendPost(actionChannelPath, (counter++).toString());
             RequestStatus requestStatus = SharedDB.restWrapper.sendGet(dataChannelPath);
             ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage().replace("image:", ""), 400, 400);
-            remove(dataLabel);
-            dataLabel = new JLabel(imageIcon);
+            dataLabel.setIcon(imageIcon);
         } catch (Exception e) {
             System.out.println("[ERROR] Couldn't covert message to Image");
             dataLabel = new JLabel("[ERROR] Couldn't covert message to Image");
