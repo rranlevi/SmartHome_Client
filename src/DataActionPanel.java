@@ -218,6 +218,7 @@ public class DataActionPanel extends JPanel {
                         JSlider actionSlider;
                         JLabel sliderValueLabel = new JLabel();
                         JButton sendButton = new JButton("Send");
+                        sendButton.setToolTipText(action.getDescription());
 
                         // Check if description contains "Temp" and set slider range accordingly
                         if (action.getName().contains("Temp")) {
@@ -359,7 +360,7 @@ public class DataActionPanel extends JPanel {
         // Remove the overlay panel after the delay
         new Thread(() -> {
             try {
-                Thread.sleep(200); // Simulate loading delay
+                Thread.sleep(400); // Simulate loading delay
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             } finally {
