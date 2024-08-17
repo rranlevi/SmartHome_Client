@@ -4,10 +4,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import Classes.HouseholdDevice;
 import Classes.RequestStatus;
@@ -47,13 +45,30 @@ public class AddDevicesPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(centeredDevicePanel);
         add(scrollPane, BorderLayout.CENTER);
 
-        // Panel for buttons
-        buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout());
+        // Create a panel to hold the dropdown and buttons
+        JPanel dropdownAndButtonsPanel = new JPanel();
+        dropdownAndButtonsPanel.setLayout(new BoxLayout(dropdownAndButtonsPanel, BoxLayout.Y_AXIS));
+
+        // Create a panel for the dropdown with FlowLayout to prevent stretching
+        JPanel dropdownPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JComboBox<String> sortComboBox = createSortComboBox();
+        dropdownPanel.add(sortComboBox);
+
+        // Add the dropdown panel to the dropdownAndButtonsPanel
+        dropdownAndButtonsPanel.add(dropdownPanel);
+
+        // Panel for the buttons with FlowLayout to keep them next to each other
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // Center-aligned buttons
         buttonPanel.add(createAddButton());
         buttonPanel.add(createGoBackButton());
         buttonPanel.add(createRefreshButton());
-        add(buttonPanel, BorderLayout.SOUTH);
+
+        // Add the button panel to the dropdownAndButtonsPanel
+        dropdownAndButtonsPanel.add(buttonPanel);
+
+        // Add the combined dropdown and buttons panel to the bottom of the screen
+        add(dropdownAndButtonsPanel, BorderLayout.SOUTH);
 
         // Add a component listener to refresh the panel when it becomes visible
         this.addComponentListener(new ComponentAdapter() {
@@ -67,10 +82,11 @@ public class AddDevicesPanel extends JPanel {
         refreshDeviceList();
     }
 
+
     // Create title for the panel
     private JLabel createTitle() {
         JLabel titleLabel = new JLabel("Add New Device", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         return titleLabel;
     }
@@ -93,23 +109,30 @@ public class AddDevicesPanel extends JPanel {
         SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
             @Override
             protected List<HouseholdDevice> doInBackground() throws Exception {
-                Thread.sleep(1500); // Simulate loading delay, it's only a UI delay
 
-                // Handle the fetched devices from the server
-                List<HouseholdDevice> fetchedDevices = fetchDevicesFromServer();
-                Set<String> existingDeviceIds = new HashSet<>();
-                for (HouseholdDevice device : SharedDB.getDevices()) {
-                    existingDeviceIds.add(device.getDeviceId());
-                }
+                try {
+                    Thread.sleep(1000); // Simulate loading delay, it's only a UI delay
 
-                // We filter the devices that are already added
-                List<HouseholdDevice> filteredDevices = new ArrayList<>();
-                for (HouseholdDevice device : fetchedDevices) {
-                    if (!existingDeviceIds.contains(device.getDeviceId())) {
-                        filteredDevices.add(device);
+                    // Handle the fetched devices from the server
+                    List<HouseholdDevice> fetchedDevices = fetchDevicesFromServer();
+                    Set<String> existingDeviceIds = new HashSet<>();
+                    for (HouseholdDevice device : SharedDB.getDevices()) {
+                        existingDeviceIds.add(device.getDeviceId());
                     }
+
+                    // We filter the devices that are already added
+                    List<HouseholdDevice> filteredDevices = new ArrayList<>();
+                    for (HouseholdDevice device : fetchedDevices) {
+                        if (!existingDeviceIds.contains(device.getDeviceId())) {
+                            filteredDevices.add(device);
+                        }
+                    }
+                    return filteredDevices;
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return Collections.emptyList();
                 }
-                return filteredDevices;
             }
 
             // It's a catcher for the thread responsible for the UI updates in Swing (The GIF processing)
@@ -129,12 +152,11 @@ public class AddDevicesPanel extends JPanel {
 
     // Display the device list
     private void displayDeviceList() {
-        devicePanel.removeAll();
-        checkBoxes.clear();
+        devicePanel.removeAll(); // Clear all components
+        checkBoxes.clear(); // Clear the checkBox list to avoid duplicates
 
         boolean newDevicesFound = false;
 
-        // We display each device, giving the image and info about it
         for (HouseholdDevice device : receivedDevices) {
             JPanel deviceItemPanel = new JPanel();
             deviceItemPanel.setLayout(new BoxLayout(deviceItemPanel, BoxLayout.X_AXIS));
@@ -146,7 +168,6 @@ public class AddDevicesPanel extends JPanel {
                     device.getDeviceRoom() + " - " + device.getDescription());
             checkBoxes.add(checkBox);
 
-            // Center everything as it should be aligned
             deviceItemPanel.add(Box.createHorizontalGlue());
             deviceItemPanel.add(imageLabel);
             deviceItemPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -162,8 +183,8 @@ public class AddDevicesPanel extends JPanel {
             devicePanel.add(centerComponent(noNewDevicesLabel));
         }
 
-        devicePanel.revalidate();
-        devicePanel.repaint();
+        devicePanel.revalidate(); // Revalidate to refresh the layout
+        devicePanel.repaint(); // Repaint to ensure the panel is updated
     }
 
     // Fetch devices from the server using GET
@@ -180,6 +201,46 @@ public class AddDevicesPanel extends JPanel {
         }
 
         return devices;
+    }
+
+    // Sort devices using a comparator based on the selected option
+    private void sortDevices(String sortBy) {
+        Comparator<HouseholdDevice> comparator;
+
+        if ("Sort by Name".equals(sortBy)) {
+            comparator = Comparator.comparing(HouseholdDevice::getDeviceName, String.CASE_INSENSITIVE_ORDER);
+        } else if ("Sort by Room".equals(sortBy)) {
+            comparator = Comparator.comparing(HouseholdDevice::getDeviceRoom, String.CASE_INSENSITIVE_ORDER);
+        } else {
+            return; // If an unknown sorting option is selected, do nothing
+        }
+
+        receivedDevices.sort(comparator);
+
+        // Revalidate and repaint after sorting to ensure the UI is updated
+        devicePanel.revalidate();
+        devicePanel.repaint();
+    }
+
+    // Create a dropdown for sorting options
+    private JComboBox<String> createSortComboBox() {
+        String[] sortOptions = {"Sort by Name", "Sort by Room"};
+        JComboBox<String> sortComboBox = new JComboBox<>(sortOptions);
+
+        // Set the preferred size of the JComboBox to match the buttons
+        sortComboBox.setPreferredSize(new Dimension(150, 30)); // Width of 150px, height of 30px
+
+        sortComboBox.setSelectedIndex(0); // Default to sorting by name
+
+        sortComboBox.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                sortDevices(sortComboBox.getSelectedItem().toString());
+                displayDeviceList();
+            }
+        });
+
+        return sortComboBox;
     }
 
     // We retrieve the check-boxed devices to add
