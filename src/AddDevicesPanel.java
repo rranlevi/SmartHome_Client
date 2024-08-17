@@ -20,7 +20,9 @@ public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
     private CardLayout cardLayout;
     private JPanel cardPanel;
-    private JTable table;
+    private JTable table; // Reference to JTable
+    private JLabel loadingLabel; // Label for loading GIF
+    private JScrollPane scrollPane; // ScrollPane for JTable
 
     public AddDevicesPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
@@ -51,8 +53,14 @@ public class AddDevicesPanel extends JPanel {
         table.setRowHeight(40); // Set a consistent row height for all rows
 
         // Wrap the table in a JScrollPane
-        JScrollPane scrollPane = new JScrollPane(table);
-        add(scrollPane, BorderLayout.CENTER);
+        scrollPane = new JScrollPane(table);
+
+        // Create the loading GIF label
+        loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
+        loadingLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        // Initially show the loading label
+        add(loadingLabel, BorderLayout.CENTER);
 
         // Create a panel to hold the dropdown and buttons
         JPanel dropdownAndButtonsPanel = new JPanel();
@@ -99,34 +107,41 @@ public class AddDevicesPanel extends JPanel {
         return titleLabel;
     }
 
-    // Handle the loading GIF for the panel
-    private void showLoadingIcon(DefaultTableModel tableModel) {
-        // Clear existing components and show loading icon
-        tableModel.setRowCount(0);
-        JLabel loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
-        tableModel.addRow(new Object[]{loadingLabel, "Loading...", "", "", null});
+    // Show the loading GIF while refreshing or loading from server
+    private void showLoadingIcon() {
+        remove(scrollPane); // Remove the JTable's scroll pane
+        add(loadingLabel, BorderLayout.CENTER); // Show the loading label
+        revalidate();
+        repaint();
+    }
+
+    // Hide the loading GIF and show the table when we are done
+    private void hideLoadingIcon() {
+        remove(loadingLabel); // Remove the loading label
+        add(scrollPane, BorderLayout.CENTER); // Show the JTable's scroll pane
+        revalidate();
+        repaint();
     }
 
     // Refresh the device list
     private void refreshDeviceList(DefaultTableModel tableModel) {
-        showLoadingIcon(tableModel);
+        showLoadingIcon(); // Show loading GIF
 
         // Use SwingWorker to handle UI processing in the background (thread)
         SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
             @Override
             protected List<HouseholdDevice> doInBackground() throws Exception {
-
                 try {
-                    Thread.sleep(1000); // Simulate loading delay, it's only a UI delay
+                    Thread.sleep(1000); // Simulate loading delay
 
-                    // Handle the fetched devices from the server
+                    // Fetch devices from the server
                     List<HouseholdDevice> fetchedDevices = fetchDevicesFromServer();
                     Set<String> existingDeviceIds = new HashSet<>();
                     for (HouseholdDevice device : SharedDB.getDevices()) {
                         existingDeviceIds.add(device.getDeviceId());
                     }
 
-                    // We filter the devices that are already added
+                    // Filter out devices that are already added
                     List<HouseholdDevice> filteredDevices = new ArrayList<>();
                     for (HouseholdDevice device : fetchedDevices) {
                         if (!existingDeviceIds.contains(device.getDeviceId())) {
@@ -135,22 +150,24 @@ public class AddDevicesPanel extends JPanel {
                     }
                     return filteredDevices;
 
+                  // Catch any exception and print them
                 } catch (Exception e) {
-                    // Print the throw if it happens
                     e.printStackTrace();
                     return Collections.emptyList();
                 }
             }
 
-            // It's a catcher for the thread responsible for the UI updates in Swing (The GIF processing)
             @Override
             protected void done() {
                 try {
                     receivedDevices = get();
                     displayDeviceList(tableModel);
                 } catch (InterruptedException | ExecutionException e) {
-                    // Print the throw if it happens
                     e.printStackTrace();
+
+                    // Executed regardless of whether an exception was thrown
+                } finally {
+                    hideLoadingIcon(); // Hide loading GIF and show the table
                 }
             }
         };
@@ -175,12 +192,22 @@ public class AddDevicesPanel extends JPanel {
 
         // Set a custom cell renderer to add the tooltip to the "Description" column
         table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            // We override the default cell behaviour for cell 3 (Description) to implement a tooltip on it
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+                // If the component we received is of type JComponent
                 if (c instanceof JComponent) {
                     JComponent jc = (JComponent) c;
-                    jc.setToolTipText(value != null ? value.toString() : null); // Set the full description as the tooltip
+
+                    // Set the full description as the tooltip
+                    if (value != null) {
+                        jc.setToolTipText(value.toString());
+                    } else {
+                        jc.setToolTipText(null);
+                    }
+
                 }
                 return c;
             }
