@@ -1,17 +1,17 @@
 package Classes;
 
 public class Widget {
-    private String text;
+    private String type;
 
     public Widget(String text){
-        this.text = text;
+        this.type = text;
     }
 
     public String getText() {
-        return text;
+        return type;
     }
 
     public void setText(String text) {
-        this.text = text;
+        this.type = text;
     }
 }

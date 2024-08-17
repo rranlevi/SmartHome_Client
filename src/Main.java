@@ -13,8 +13,8 @@ import java.awt.CardLayout;
 
 public class Main {
     public static void main(String[] args) {
-        //SharedDB.loadDevices(); // Has to be first!
-        SharedDB.setDevices(new ArrayList<HouseholdDevice>());
+        SharedDB.loadDevices(); // Has to be first!
+//        SharedDB.setDevices(new ArrayList<HouseholdDevice>());
 
 
         // Create a new frame
