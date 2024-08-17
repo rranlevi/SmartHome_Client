@@ -17,6 +17,12 @@ public class MainPanel extends JPanel {
         this.cardPanel = cardPanel;
         setLayout(new BorderLayout());
 
+        // Create and add the title at the top
+        JLabel titleLabel = new JLabel("Main Menu", JLabel.CENTER);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Add padding around the title
+        add(titleLabel, BorderLayout.NORTH);
+
         // Create the button and the dropdown for sorting
         JButton button = new JButton("Add New Devices");
         button.addActionListener(_ -> cardLayout.show(cardPanel, "AddDevicesPanel"));
