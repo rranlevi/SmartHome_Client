@@ -15,7 +15,7 @@ public class DataActionPanel extends JPanel {
     private final HouseholdDevice device;
     private static Integer counter = 1;
     private JLabel dataLabel;
-    private Timer timer = new Timer();
+    private Timer timer;
 
 
     public DataActionPanel(CardLayout cardLayout, JPanel cardPanel, HouseholdDevice device) {
@@ -368,10 +368,6 @@ public class DataActionPanel extends JPanel {
                         break;
 
                     case "CameraStream":
-                        // Cancel the previous timer
-                        timer.cancel();
-
-                        // Create a new timer and schedule the task
                         timer = new Timer();
                         timer.scheduleAtFixedRate(new TimerTask() {
                             @Override
@@ -379,7 +375,7 @@ public class DataActionPanel extends JPanel {
                                 // Refresh image here
                                 refreshImage(action.getActionChannel().getChannelPath(), action.getDataChannel().getChannelPath());
                             }
-                        }, 50, 50); // every 50 milliseconds
+                        },50, 50);;
                         break;
                 }
                 actionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Add space between actions
@@ -395,7 +391,10 @@ public class DataActionPanel extends JPanel {
         JButton returnButton = new JButton("Go back to main screen");
 
         returnButton.addActionListener(_ -> {
-
+            if(timer != null) {
+                timer.cancel();
+                timer.purge(); // Clean up canceled tasks
+            }
             cardLayout.show(cardPanel, "MainPanel");
         });
         return returnButton;
