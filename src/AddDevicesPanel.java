@@ -1,20 +1,16 @@
 import javax.swing.*;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import Classes.HouseholdDevice;
-import Classes.RequestStatus;
-import Enums.RestPath;
-import com.google.gson.Gson;
+import Classes.*;
+import Enums.*;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
+
 
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
