@@ -9,4 +9,12 @@ public class Utils {
         Image scaledImage = image.getScaledInstance(size_X, size_Y, Image.SCALE_SMOOTH);
         return new ImageIcon(scaledImage);
     }
+
+    public static String fixTo20Chars(String input) {
+        if (input.length() > 18) {  // 18 characters + 2 for the ".."
+            return input.substring(0, 18) + "..";
+        } else {
+            return String.format("%-20s", input); // Pads with spaces on the right if the string is less than 20 characters
+        }
+    }
 }
