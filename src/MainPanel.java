@@ -4,6 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 import Classes.*;
 import java.awt.event.*;
+import java.util.Comparator;
 import java.util.List;
 
 public class MainPanel extends JPanel {
@@ -16,12 +17,27 @@ public class MainPanel extends JPanel {
         this.cardPanel = cardPanel;
         setLayout(new BorderLayout());
 
+        // Create the button and the dropdown for sorting
         JButton button = new JButton("Add New Devices");
         button.addActionListener(_ -> cardLayout.show(cardPanel, "AddDevicesPanel"));
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout());
+        JComboBox<String> sortComboBox = createSortComboBox();
+
+        // Create a panel to hold the button and dropdown with the dropdown above the button
+        JPanel southPanel = new JPanel();
+        southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
+
+        // Ensure the dropdown and button stay within the window's width and are centered
+        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        sortPanel.add(sortComboBox);
+        southPanel.add(sortPanel);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.add(button);
-        add(buttonPanel, BorderLayout.SOUTH);
+        southPanel.add(buttonPanel);
+
+        // Add some padding to ensure it doesn’t touch the window edges
+        southPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        add(southPanel, BorderLayout.SOUTH);
 
         devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));
@@ -103,5 +119,34 @@ public class MainPanel extends JPanel {
         box.add(component);
         box.add(Box.createHorizontalGlue());
         return box;
+    }
+
+    // Sort devices using a comparator based on the selected option
+    private void sortDevices(String sortBy) {
+        Comparator<HouseholdDevice> comparator;
+
+        if ("Sort by Name".equals(sortBy)) {
+            comparator = Comparator.comparing(HouseholdDevice::getDeviceName, String.CASE_INSENSITIVE_ORDER);
+        } else if ("Sort by Room".equals(sortBy)) {
+            comparator = Comparator.comparing(HouseholdDevice::getDeviceRoom, String.CASE_INSENSITIVE_ORDER);
+        } else {
+            return; // If an unknown sorting option is selected, do nothing
+        }
+
+        SharedDB.getDevices().sort(comparator);
+    }
+
+    // Create a dropdown for sorting options
+    private JComboBox<String> createSortComboBox() {
+        String[] sortOptions = {"Sort by Name", "Sort by Room"};
+        JComboBox<String> sortComboBox = new JComboBox<>(sortOptions);
+        sortComboBox.setSelectedIndex(0); // Default to sorting by name
+
+        sortComboBox.addActionListener(e -> {
+            sortDevices(sortComboBox.getSelectedItem().toString());
+            refreshDevicesPanel();
+        });
+
+        return sortComboBox;
     }
 }
