@@ -375,7 +375,7 @@ public class DataActionPanel extends JPanel {
                                 // Refresh image here
                                 refreshImage(action.getActionChannel().getChannelPath(), action.getDataChannel().getChannelPath());
                             }
-                        },50, 50);;
+                        },50, 50);
                         break;
                 }
                 actionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Add space between actions
