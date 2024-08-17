@@ -2,6 +2,7 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.awt.event.ItemEvent;
+import java.util.Objects;
 
 import Classes.*;
 
@@ -23,9 +24,9 @@ public class DataActionPanel extends JPanel {
     private void initializeComponents() {
         removeAll();
 
-        // Initialize and add title section
-        JLabel titleLabel = createTitle();
-        add(titleLabel, BorderLayout.NORTH);
+        // Add image and device info below the title
+        JPanel deviceInfoPanel = createDeviceInfoPanel();
+        add(deviceInfoPanel, BorderLayout.NORTH);
 
         // Initialize and add central container with data and action sections
         JPanel centralPanel = createCentralPanel();
@@ -44,12 +45,42 @@ public class DataActionPanel extends JPanel {
         repaint();
     }
 
-    private JLabel createTitle() {
-        JLabel titleLabel = new JLabel("Data & Action", JLabel.CENTER);
+    private JPanel createDeviceInfoPanel() {
+        JPanel devicePanel = new JPanel(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(10, 10, 10, 10);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        // Add the icon and description on the left side
+        JPanel descriptionPanel = new JPanel(new BorderLayout());
+        ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
+        JLabel imageLabel = new JLabel(imageIcon);
+        descriptionPanel.add(imageLabel, BorderLayout.WEST);
+
+        JLabel deviceInfo = new JLabel("<html>" + device.getDeviceName() + "<br>Room: " + device.getDeviceRoom() + "<br>Description: " + device.getDescription() + "</html>");
+        deviceInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+        descriptionPanel.add(deviceInfo, BorderLayout.CENTER);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.WEST;
+        devicePanel.add(descriptionPanel, gbc);
+
+        // Add the "Data & Action" title on the right side
+        JLabel titleLabel = new JLabel("Data & Action", JLabel.RIGHT);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        return titleLabel;
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.anchor = GridBagConstraints.EAST;
+        devicePanel.add(titleLabel, gbc);
+
+        // Remove the underline separator beneath the title
+        // (Previously we added a JSeparator here, now it's removed)
+
+        return devicePanel;
     }
+
 
     private JPanel createCentralPanel() {
         JPanel centralPanel = new JPanel();
@@ -65,17 +96,31 @@ public class DataActionPanel extends JPanel {
         return centralPanel;
     }
 
+    private JPanel createUnderlinedTitle(String title) {
+        JPanel titlePanel = new JPanel(new BorderLayout());
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        titlePanel.add(titleLabel, BorderLayout.NORTH);
+
+        JSeparator separator = new JSeparator(SwingConstants.HORIZONTAL);
+        separator.setForeground(Color.BLACK);
+        titlePanel.add(separator, BorderLayout.SOUTH);
+
+        return titlePanel;
+    }
+
+
     private JPanel createDataSection() {
         JPanel dataSection = new JPanel(new BorderLayout());
+        dataSection.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Add padding
 
-        JLabel dataTitle = new JLabel("Data");
-        dataTitle.setFont(new Font("Arial", Font.BOLD, 20)); // Increased font size
-        dataTitle.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        dataSection.add(dataTitle, BorderLayout.NORTH);
+        // Create the underlined title
+        JPanel dataTitlePanel = createUnderlinedTitle("Data");
+        dataSection.add(dataTitlePanel, BorderLayout.NORTH);
 
         JPanel dataPanel = new JPanel();
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
-
         for (DeviceInfo data : device.getDeviceDataController().getDeviceData()) {
             RequestStatus requestStatus = SharedDB.restWrapper.sendGet(data.getChannel().getChannelPath());
 
@@ -83,6 +128,7 @@ public class DataActionPanel extends JPanel {
             JPanel dataItemPanel = new JPanel();
             dataItemPanel.setLayout(new BoxLayout(dataItemPanel, BoxLayout.Y_AXIS)); // Changed to vertical layout
             dataItemPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Increased spacing between items
+
 
             // Style for the info name
             JLabel infoNameLabel = new JLabel(data.getDeviceInfo().getInfoName());
@@ -95,14 +141,22 @@ public class DataActionPanel extends JPanel {
             infoNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
 
             // Style for the message
-            JLabel dataLabel = new JLabel(requestStatus.getMessage());
-            dataLabel.setFont(new Font("Arial", Font.PLAIN, 18)); // Larger font size
-            dataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-            dataLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // Adding some space below the info name
+            JLabel dataLabel;
+            if (requestStatus.getMessage().length() > 1000) {
+                ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage(), 640, 640);
+                dataLabel = new JLabel(imageIcon);
+            }
+            else {
+                dataLabel = new JLabel(requestStatus.getMessage());
+                dataLabel.setFont(new Font("Arial", Font.PLAIN, 18)); // Larger font size
+                dataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                dataLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // Adding some space below the info name
+            }
 
             // Add the info name and message to the data item panel
             dataItemPanel.add(infoNameLabel);
             dataItemPanel.add(dataLabel);
+
 
             // Add the data item panel to the main data panel
             dataPanel.add(dataItemPanel);
@@ -114,18 +168,18 @@ public class DataActionPanel extends JPanel {
     }
 
 
-
-
     private JPanel createActionSection() {
         JPanel actionSection = new JPanel(new BorderLayout());
+        actionSection.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Add padding
 
-        JLabel actionTitle = new JLabel("Actions");
-        actionTitle.setFont(new Font("Arial", Font.BOLD, 16));
-        actionTitle.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        actionSection.add(actionTitle, BorderLayout.NORTH);
+        // Create the underlined title without the blue line at the top
+        JPanel actionTitlePanel = createUnderlinedTitle("Actions");
+        actionSection.add(actionTitlePanel, BorderLayout.NORTH);
 
         JPanel actionPanel = new JPanel();
         actionPanel.setLayout(new BoxLayout(actionPanel, BoxLayout.Y_AXIS));
+        actionPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Add spacing between actions
+
         for (DeviceAction action : device.getDeviceActionController().getDeviceActions()) {
             if (action.isAvailable()) {
                 switch (action.getWidget().getClass().getSimpleName()) {
@@ -137,7 +191,7 @@ public class DataActionPanel extends JPanel {
                         actionComboboxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                         actionCombobox.setAlignmentX(Component.LEFT_ALIGNMENT);
 
-                        for(String item : ((Dropdown) action.getWidget()).getListOptions()){
+                        for (String item : ((Dropdown) action.getWidget()).getListOptions()) {
                             actionCombobox.addItem(item);
                         }
                         RequestStatus dropDownData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
@@ -148,15 +202,23 @@ public class DataActionPanel extends JPanel {
                             showLoadingIcon(); // For simulating server response
                             initializeComponents();
                         });
-                        actionPanel.add(actionComboboxLabel);
-                        actionPanel.add(actionCombobox);
+
+                        // Create a container panel with FlowLayout for proper alignment
+                        JPanel dropdownContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        dropdownContainer.add(actionComboboxLabel);
+                        dropdownContainer.add(actionCombobox);
+
+                        // Add the switchContainer directly to the actionPanel
+                        actionPanel.add(dropdownContainer);
                         break;
 
                     case "Slider":
+                        // Create components
                         JLabel actionSliderLabel = new JLabel(action.getName());
                         JSlider actionSlider;
                         JLabel sliderValueLabel = new JLabel();
                         JButton sendButton = new JButton("Send");
+                        sendButton.setToolTipText(action.getDescription());
 
                         // Check if description contains "Temp" and set slider range accordingly
                         if (action.getName().contains("Temp")) {
@@ -167,19 +229,15 @@ public class DataActionPanel extends JPanel {
 
                         // Set the appearance of the slider
                         actionSlider.setUI(new GradientSliderUI(actionSlider));
-                        actionSlider.setPreferredSize(new Dimension(300, 50)); // Increase width and height
+                        actionSlider.setPreferredSize(new Dimension(200, 50)); // Adjust the width
                         actionSlider.setOpaque(false);
 
-                        actionSliderLabel.setToolTipText(action.getDescription());
-                        actionSliderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        actionSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        sliderValueLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        sendButton.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-                        // Update the slider value label when the slider is moved
+                        // Fetch initial value from the server and set the slider's value
                         RequestStatus sliderData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                         actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
                         sliderValueLabel.setText("Value: " + actionSlider.getValue());
+
+                        // Update the slider value label when the slider is moved
                         actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
 
                         // Send button action to send the slider value
@@ -190,10 +248,25 @@ public class DataActionPanel extends JPanel {
                             sliderValueLabel.setText("Value: " + actionSlider.getValue());
                         });
 
-                        actionPanel.add(actionSliderLabel);
-                        actionPanel.add(actionSlider);
-                        actionPanel.add(sliderValueLabel);
-                        actionPanel.add(sendButton);
+                        // Create a panel for the slider and its label
+                        JPanel sliderLabelPanel = new JPanel(new BorderLayout());
+                        sliderLabelPanel.add(actionSliderLabel, BorderLayout.NORTH);
+                        sliderLabelPanel.add(actionSlider, BorderLayout.CENTER);
+
+                        // Create a panel for the value label and send button
+                        JPanel valueSendPanel = new JPanel();
+                        valueSendPanel.setLayout(new BoxLayout(valueSendPanel, BoxLayout.Y_AXIS)); // Vertical layout for value and button
+                        valueSendPanel.add(sliderValueLabel);
+                        valueSendPanel.add(sendButton);
+
+                        // Create a container panel with FlowLayout for proper alignment
+                        JPanel sliderContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        sliderContainer.add(sliderLabelPanel);
+                        sliderContainer.add(valueSendPanel);
+
+                        // Add the sliderContainer directly to the actionPanel
+                        actionPanel.add(sliderContainer);
+
                         break;
 
                     case "Switch":
@@ -229,15 +302,27 @@ public class DataActionPanel extends JPanel {
                             showLoadingIcon(); // For simulating server response
                             initializeComponents();
                         });
-                        actionPanel.add(actionSwitch);
+
+                        // Create a container panel with FlowLayout for proper alignment
+                        JPanel switchContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        switchContainer.add(actionSwitch);
+
+                        // Add the switchContainer directly to the actionPanel
+                        actionPanel.add(switchContainer);
+                        break;
+
+                    case "CameraStream":
+
                         break;
                 }
+                actionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Add space between actions
             }
         }
         actionSection.add(actionPanel, BorderLayout.CENTER);
 
         return actionSection;
     }
+
 
     private JButton createReturnButton() {
         JButton returnButton = new JButton("Go back to main screen");
@@ -275,7 +360,7 @@ public class DataActionPanel extends JPanel {
         // Remove the overlay panel after the delay
         new Thread(() -> {
             try {
-                Thread.sleep(200); // Simulate loading delay
+                Thread.sleep(400); // Simulate loading delay
             } catch (InterruptedException ex) {
                 ex.printStackTrace();
             } finally {
@@ -290,6 +375,7 @@ public class DataActionPanel extends JPanel {
 } // End of DataActionPanel Class
 
 
+// Custom UI class for gradient slider
 class GradientSliderUI extends BasicSliderUI {
 
     public GradientSliderUI(JSlider slider) {
@@ -300,34 +386,12 @@ class GradientSliderUI extends BasicSliderUI {
     public void paintTrack(Graphics g) {
         Graphics2D g2d = (Graphics2D) g;
         Rectangle trackBounds = trackRect;
-
-        // Create a gradient from blue to green to yellow to red
         GradientPaint gp = new GradientPaint(
-                trackBounds.x, trackBounds.y, Color.BLUE, // Start with blue
-                trackBounds.x + ((float) trackBounds.width / 3), trackBounds.y, Color.GREEN // Transition to green
+                trackBounds.x, trackBounds.y, Color.BLUE,
+                trackBounds.width, trackBounds.y, Color.RED
         );
-
-        GradientPaint gp2 = new GradientPaint(
-                trackBounds.x + ((float) trackBounds.width / 3), trackBounds.y, Color.GREEN,
-                trackBounds.x + ((float) (2 * trackBounds.width) / 3), trackBounds.y, Color.YELLOW // Transition to yellow
-        );
-
-        GradientPaint gp3 = new GradientPaint(
-                trackBounds.x + ((float) (2 * trackBounds.width) / 3), trackBounds.y, Color.YELLOW,
-                trackBounds.x + trackBounds.width, trackBounds.y, Color.RED // Transition to red
-        );
-
-        // Draw the first gradient (blue to green)
         g2d.setPaint(gp);
-        g2d.fillRect(trackBounds.x, trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
-
-        // Draw the second gradient (green to yellow)
-        g2d.setPaint(gp2);
-        g2d.fillRect(trackBounds.x + (trackBounds.width / 3), trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
-
-        // Draw the third gradient (yellow to red)
-        g2d.setPaint(gp3);
-        g2d.fillRect(trackBounds.x + (2 * trackBounds.width / 3), trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
+        g2d.fillRect(trackBounds.x, trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width, 4);
     }
 
     @Override
