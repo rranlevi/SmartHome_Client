@@ -30,6 +30,7 @@ public class DeviceActionDeserializer implements JsonDeserializer<DeviceAction> 
             case "Slider" -> Slider.class;
             case "Switch" -> Switch.class;
             case "Dropdown" -> Dropdown.class;
+            case "CameraStream" -> CameraStream.class;
             default -> throw new IllegalArgumentException("Unknown widget type: " + type);
         };
     }
