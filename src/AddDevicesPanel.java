@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -19,8 +20,7 @@ public class AddDevicesPanel extends JPanel {
     private List<JCheckBox> checkBoxes;
     private CardLayout cardLayout;
     private JPanel cardPanel;
-    private JPanel devicePanel;
-    private JPanel buttonPanel;
+    private JTable table; // Reference to JTable
 
     public AddDevicesPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
@@ -31,18 +31,29 @@ public class AddDevicesPanel extends JPanel {
         // Add title label
         add(createTitle(), BorderLayout.NORTH);
 
-        // Panel for device checkboxes
-        devicePanel = new JPanel();
-        devicePanel.setLayout(new BoxLayout(devicePanel, BoxLayout.Y_AXIS));
+        // Create the JTable to display devices
+        String[] columnNames = {"Icon", "Device Info", "Device Description" , "Select"};
+        DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 3; // Make only the checkbox column editable
+            }
+        };
+        table = new JTable(tableModel) {
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return switch (column) {
+                    case 0 -> ImageIcon.class;
+                    case 3 -> Boolean.class;
+                    case 2 -> JLabel.class;
+                    default -> String.class;
+                };
+            }
+        };
+        table.setRowHeight(40); // Set a consistent row height for all rows
 
-        // Wrap devicePanel in another panel for vertical centering
-        JPanel centeredDevicePanel = new JPanel();
-        centeredDevicePanel.setLayout(new BoxLayout(centeredDevicePanel, BoxLayout.Y_AXIS));
-        centeredDevicePanel.add(Box.createVerticalGlue());
-        centeredDevicePanel.add(centerComponent(devicePanel));
-        centeredDevicePanel.add(Box.createVerticalGlue());
-
-        JScrollPane scrollPane = new JScrollPane(centeredDevicePanel);
+        // Wrap the table in a JScrollPane
+        JScrollPane scrollPane = new JScrollPane(table);
         add(scrollPane, BorderLayout.CENTER);
 
         // Create a panel to hold the dropdown and buttons
@@ -51,7 +62,7 @@ public class AddDevicesPanel extends JPanel {
 
         // Create a panel for the dropdown with FlowLayout to prevent stretching
         JPanel dropdownPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        JComboBox<String> sortComboBox = createSortComboBox();
+        JComboBox<String> sortComboBox = createSortComboBox(tableModel);
         dropdownPanel.add(sortComboBox);
 
         // Add the dropdown panel to the dropdownAndButtonsPanel
@@ -60,9 +71,9 @@ public class AddDevicesPanel extends JPanel {
         // Panel for the buttons with FlowLayout to keep them next to each other
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER)); // Center-aligned buttons
-        buttonPanel.add(createAddButton());
+        buttonPanel.add(createAddButton(tableModel));
         buttonPanel.add(createGoBackButton());
-        buttonPanel.add(createRefreshButton());
+        buttonPanel.add(createRefreshButton(tableModel));
 
         // Add the button panel to the dropdownAndButtonsPanel
         dropdownAndButtonsPanel.add(buttonPanel);
@@ -74,14 +85,13 @@ public class AddDevicesPanel extends JPanel {
         this.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
-                refreshDeviceList();
+                refreshDeviceList(tableModel);
             }
         });
 
         // Initial population of devices
-        refreshDeviceList();
+        refreshDeviceList(tableModel);
     }
-
 
     // Create title for the panel
     private JLabel createTitle() {
@@ -92,18 +102,16 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // Handle the loading GIF for the panel
-    private void showLoadingIcon() {
+    private void showLoadingIcon(DefaultTableModel tableModel) {
         // Clear existing components and show loading icon
-        devicePanel.removeAll();
+        tableModel.setRowCount(0);
         JLabel loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
-        devicePanel.add(centerComponent(loadingLabel));
-        devicePanel.revalidate();
-        devicePanel.repaint();
+        tableModel.addRow(new Object[]{loadingLabel, "Loading...", null});
     }
 
     // Refresh the device list
-    private void refreshDeviceList() {
-        showLoadingIcon();
+    private void refreshDeviceList(DefaultTableModel tableModel) {
+        showLoadingIcon(tableModel);
 
         // Use SwingWorker to handle UI processing in the background (thread)
         SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
@@ -141,7 +149,7 @@ public class AddDevicesPanel extends JPanel {
             protected void done() {
                 try {
                     receivedDevices = get();
-                    displayDeviceList();
+                    displayDeviceList(tableModel);
                 } catch (InterruptedException | ExecutionException e) {
                     // Print the throw if it happens
                     e.printStackTrace();
@@ -151,46 +159,29 @@ public class AddDevicesPanel extends JPanel {
         worker.execute();
     }
 
-    // Display the device list
-    private void displayDeviceList() {
-        devicePanel.removeAll(); // Clear all components
-        checkBoxes.clear(); // Clear the checkBox list to avoid duplicates
+    // Display the device list in the JTable
+    private void displayDeviceList(DefaultTableModel tableModel) {
+        tableModel.setRowCount(0); // Clear existing rows
 
-        boolean newDevicesFound = false;
-
-        // Concatenate and add the device list if necessary
         for (HouseholdDevice device : receivedDevices) {
-            JPanel deviceItemPanel = new JPanel();
-            deviceItemPanel.setLayout(new BoxLayout(deviceItemPanel, BoxLayout.X_AXIS));
-
-            // Image icon for each device that we receive
+            // Image icon for each device
             ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
-            JLabel imageLabel = new JLabel(imageIcon);
 
-            // Checkbox for each device that we receive
-            JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " +
-                    device.getDeviceRoom() + " - " + device.getDescription());
-            checkBoxes.add(checkBox);
+            // Add row to table model
+            JLabel deviceInfo = new JLabel(
+                    "<html>" + device.getDeviceName() +
+                            "<br>Room: " + device.getDeviceRoom() +
+                            "<br>Description: " + Utils.fixNumOfChars(device.getDescription(), 40) + "</html>");
+            deviceInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            deviceInfo.setToolTipText(device.getDescription());
 
-            // Add everything to the device panel
-            deviceItemPanel.add(Box.createHorizontalGlue());
-            deviceItemPanel.add(imageLabel);
-            deviceItemPanel.add(Box.createRigidArea(new Dimension(10, 0)));
-            deviceItemPanel.add(checkBox);
-            deviceItemPanel.add(Box.createHorizontalGlue());
-
-            devicePanel.add(deviceItemPanel);
-            newDevicesFound = true;
+            tableModel.addRow(new Object[]{imageIcon, device.getDeviceName() + " - "
+                    + device.getDeviceRoom() + " - ", deviceInfo, false});
         }
 
-        // If we haven't found newly added devices
-        if (!newDevicesFound) {
-            JLabel noNewDevicesLabel = new JLabel("No new devices available.");
-            devicePanel.add(centerComponent(noNewDevicesLabel));
+        if (receivedDevices.isEmpty()) {
+            tableModel.addRow(new Object[]{null, "No new devices available.", null});
         }
-
-        devicePanel.revalidate(); // Revalidate to refresh the layout
-        devicePanel.repaint(); // Repaint to ensure the panel is updated
     }
 
     // Fetch devices from the server using GET
@@ -211,7 +202,7 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // Sort devices using a comparator based on the selected option
-    private void sortDevices(String sortBy) {
+    private void sortDevices(String sortBy, DefaultTableModel tableModel) {
         Comparator<HouseholdDevice> comparator;
 
         if ("Sort by Name".equals(sortBy)) {
@@ -222,15 +213,15 @@ public class AddDevicesPanel extends JPanel {
             return; // If an unknown sorting option is selected, do nothing
         }
 
-        receivedDevices.sort(comparator);
+        // Sort the list of devices
+        Collections.sort(receivedDevices, comparator);
 
-        // Revalidate and repaint after sorting to ensure the UI is updated
-        devicePanel.revalidate();
-        devicePanel.repaint();
+        // Update the table model to reflect the sorted list
+        displayDeviceList(tableModel);
     }
 
     // Create a dropdown for sorting options
-    private JComboBox<String> createSortComboBox() {
+    private JComboBox<String> createSortComboBox(DefaultTableModel tableModel) {
         String[] sortOptions = {"Sort by Name", "Sort by Room"};
         JComboBox<String> sortComboBox = new JComboBox<>(sortOptions);
 
@@ -242,8 +233,7 @@ public class AddDevicesPanel extends JPanel {
         sortComboBox.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                sortDevices(sortComboBox.getSelectedItem().toString());
-                displayDeviceList();
+                sortDevices(sortComboBox.getSelectedItem().toString(), (DefaultTableModel) table.getModel());
             }
         });
 
@@ -251,10 +241,11 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // We retrieve the check-boxed devices to add
-    private List<HouseholdDevice> getSelectedDevices() {
+    private List<HouseholdDevice> getSelectedDevices(DefaultTableModel tableModel) {
         List<HouseholdDevice> selectedDevices = new ArrayList<>();
-        for (int i = 0; i < checkBoxes.size(); i++) {
-            if (checkBoxes.get(i).isSelected()) {
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Boolean isSelected = (Boolean) tableModel.getValueAt(i, 2);
+            if (isSelected != null && isSelected) {
                 selectedDevices.add(receivedDevices.get(i));
             }
         }
@@ -262,18 +253,18 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // Add button
-    private JButton createAddButton() {
+    private JButton createAddButton(DefaultTableModel tableModel) {
         JButton addButton = new JButton("Add Selected Devices");
         addButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                List<HouseholdDevice> selectedDevices = getSelectedDevices();
+                List<HouseholdDevice> selectedDevices = getSelectedDevices(tableModel);
 
                 for (HouseholdDevice device : selectedDevices) {
                     SharedDB.addDevice(device);
                 }
 
-                refreshDeviceList();
+                refreshDeviceList(tableModel);
             }
         });
         return addButton;
@@ -292,12 +283,12 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // Refresh the UI button
-    private JButton createRefreshButton() {
+    private JButton createRefreshButton(DefaultTableModel tableModel) {
         JButton refreshButton = new JButton("Refresh devices");
         refreshButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                refreshDeviceList();
+                refreshDeviceList(tableModel);
             }
         });
         return refreshButton;
