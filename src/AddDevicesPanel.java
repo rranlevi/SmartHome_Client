@@ -36,13 +36,17 @@ public class AddDevicesPanel extends JPanel {
                 return column == 4; // Make only the checkbox column editable
             }
         };
+        // Initialize the JTable with the custom table model
         table = new JTable(tableModel) {
+
+            // Override the getColumnClass method to define the class type for each column
             @Override
             public Class<?> getColumnClass(int column) {
+                // Use a switch expression to determine the class type based on the column index
                 return switch (column) {
-                    case 0 -> ImageIcon.class;
-                    case 4 -> Boolean.class;
-                    default -> String.class;
+                    case 0 -> ImageIcon.class;  // Column 0 should hold ImageIcon objects (for device icons)
+                    case 4 -> Boolean.class;    // Column 4 should hold Boolean objects (for checkboxes)
+                    default -> String.class;    // All other columns should hold String objects (for text data)
                 };
             }
         };
@@ -175,7 +179,6 @@ public class AddDevicesPanel extends JPanel {
         worker.execute();
     }
 
-    // Display the device list in the JTable
     // Display the device list in the JTable
     private void displayDeviceList(DefaultTableModel tableModel) {
         tableModel.setRowCount(0); // Clear existing rows
