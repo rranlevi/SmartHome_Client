@@ -11,8 +11,8 @@ public class Utils {
     }
 
     public static String fixNumOfChars(String input, int numChars) {
-        if (input.length() > numChars - 2) {  // 18 characters + 2 for the ".."
-            return input.substring(0, numChars - 2) + "..";
+        if (input.length() > numChars - 3) {  // 18 characters + 2 for the ".."
+            return input.substring(0, numChars - 3) + "...";
         } else {
             return String.format("%-20s", input); // Pads with spaces on the right if the string is less than 20 characters
         }
