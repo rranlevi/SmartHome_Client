@@ -160,19 +160,14 @@ public class DataActionPanel extends JPanel {
 
             // Create a label for the data item's name with styling
             JLabel infoNameLabel = new JLabel(data.getDeviceInfo().getInfoName());
-            infoNameLabel.setFont(new Font("Arial", Font.BOLD, 18)); // Larger font size
-            infoNameLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Square border
-            infoNameLabel.setOpaque(true);
-            infoNameLabel.setBackground(new Color(230, 230, 230)); // Light gray background
-            infoNameLabel.setPreferredSize(new Dimension(200, 40)); // Increased size for square look
-            infoNameLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center the text inside the square
-            infoNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            setLabelLook(infoNameLabel);
 
             // Check if the data is an image
             if (requestStatus.getMessage().startsWith("image:")) {
                 try {
                     ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage().replace("image:", ""), 400, 400);
                     dataLabel = new JLabel(imageIcon);
+                    dataLabel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
                 } catch (Exception e) {
                     System.out.println("[ERROR] Couldn't covert message to Image");
                     dataLabel = new JLabel("[ERROR] Couldn't covert message to Image");
@@ -185,6 +180,7 @@ public class DataActionPanel extends JPanel {
             }// End of if (requestStatus.getMessage().startsWith("image:"))
 
             dataItemPanel.add(infoNameLabel);
+            dataItemPanel.add(Box.createRigidArea(new Dimension(0, 10))); // Add some space between the label and combo box
             dataItemPanel.add(dataLabel);
 
             dataPanel.add(dataItemPanel);
@@ -215,11 +211,13 @@ public class DataActionPanel extends JPanel {
                 switch (action.getWidget().getClass().getSimpleName()) {
                     case "Dropdown":
                         JLabel actionComboboxLabel = new JLabel(action.getName());
-                        JComboBox actionCombobox = new JComboBox();
+                        setLabelLook(actionComboboxLabel);
                         actionComboboxLabel.setToolTipText(action.getDescription());
+
+                        JComboBox actionCombobox = new JComboBox();
                         actionCombobox.setMaximumSize(new Dimension(Integer.MAX_VALUE, actionCombobox.getPreferredSize().height));
-                        actionComboboxLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        actionCombobox.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        actionComboboxLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        actionCombobox.setAlignmentX(Component.CENTER_ALIGNMENT);
 
                         // Populate the combo box with options from the action's widget
                         for (String item : ((Dropdown) action.getWidget()).getListOptions()) {
@@ -246,10 +244,23 @@ public class DataActionPanel extends JPanel {
                             }};
                         }
 
-                        // Create a container panel with FlowLayout for proper alignment
-                        JPanel dropdownContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
-                        dropdownContainer.add(actionComboboxLabel);
-                        dropdownContainer.add(actionCombobox);
+                        // Create a container panel with GridBagLayout for controlled alignment
+                        JPanel dropdownContainer = new JPanel(new GridBagLayout());
+                        GridBagConstraints gbc = new GridBagConstraints();
+                        gbc.insets = new Insets(5, 0, 5, 0); // Add some padding between components
+
+                        // Configure GridBagConstraints for the label
+                        gbc.gridx = 0;
+                        gbc.gridy = 0;
+                        gbc.anchor = GridBagConstraints.CENTER;
+                        dropdownContainer.add(actionComboboxLabel, gbc);
+
+                        // Configure GridBagConstraints for the combo box
+                        gbc.gridx = 0;
+                        gbc.gridy = 1;
+                        gbc.fill = GridBagConstraints.HORIZONTAL; // Make the combo box stretch horizontally
+                        actionCombobox.setPreferredSize(new Dimension(300, actionCombobox.getPreferredSize().height));
+                        dropdownContainer.add(actionCombobox, gbc);
 
                         // Add the switchContainer directly to the actionPanel
                         actionPanel.add(dropdownContainer);
@@ -257,6 +268,8 @@ public class DataActionPanel extends JPanel {
 
                     case "Slider":
                         JLabel actionSliderLabel = new JLabel(action.getName());
+                        setLabelLook(actionSliderLabel);
+
                         JSlider actionSlider = new JSlider(
                                 Integer.parseInt(((Slider) action.getWidget()).getSliderMinValue()),
                                 Integer.parseInt(((Slider) action.getWidget()).getSliderMaxValue()));
@@ -266,13 +279,14 @@ public class DataActionPanel extends JPanel {
 
                         // Set the appearance of the slider
                         actionSlider.setUI(new GradientSliderUI(actionSlider));
-                        actionSlider.setPreferredSize(new Dimension(200, 50)); // Adjust the width
+                        actionSlider.setPreferredSize(new Dimension(300, 70)); // Adjust the width
                         actionSlider.setOpaque(false);
                         try {
                             // Fetch initial value from the server and set the slider's value
                             RequestStatus sliderData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
                             actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
                             sliderValueLabel.setText("Value: " + actionSlider.getValue());
+                            sliderValueLabel.setFont(new Font("Arial", Font.PLAIN, 16));
 
                             // Update the slider value label when the slider is moved
                             actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
@@ -303,6 +317,7 @@ public class DataActionPanel extends JPanel {
                         valueSendPanel.setLayout(new BoxLayout(valueSendPanel, BoxLayout.Y_AXIS)); // Vertical layout for value and button
                         valueSendPanel.add(sliderValueLabel);
                         valueSendPanel.add(sendButton);
+                        valueSendPanel.setBorder(BorderFactory.createEmptyBorder(0, 25, 0, 0)); // 20 pixels padding on the left
 
                         // Create a container panel with FlowLayout for proper alignment
                         JPanel sliderContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -316,7 +331,10 @@ public class DataActionPanel extends JPanel {
                     case "Switch":
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
-                        actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        actionSwitch.setAlignmentX(Component.CENTER_ALIGNMENT);
+                        actionSwitch.setPreferredSize(new Dimension(200, 40));
+                        actionSwitch.setFont(new Font("Arial", Font.BOLD, 18)); // Larger font size
+
                         try {
                             // Fetch the current state from the server and update the switch's state
                             RequestStatus switchData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
@@ -328,13 +346,13 @@ public class DataActionPanel extends JPanel {
                                     if (action.getName().equals("Power")) {
                                         actionSwitch.setContentAreaFilled(false);
                                         actionSwitch.setOpaque(true);
-                                        actionSwitch.setBackground(Color.GREEN);
+                                        actionSwitch.setBackground(new Color(144, 238, 144)); // Light green
                                     }
                                     break;
                                 case "Off":
                                     actionSwitch.setSelected(false);
                                     if (action.getName().equals("Power")) {
-                                        actionSwitch.setBackground(Color.RED);
+                                        actionSwitch.setBackground(new Color(255, 182, 193)); // Light red (pinkish hue)
                                     }
                                     break;
                             }
@@ -462,45 +480,58 @@ public class DataActionPanel extends JPanel {
         dataLabel.revalidate();
         dataLabel.repaint();
     }
+
+    private void setLabelLook(JLabel label){
+        label.setFont(new Font("Arial", Font.BOLD, 18)); // Larger font size
+        label.setBorder(BorderFactory.createLineBorder(Color.BLACK)); // Square border
+        label.setOpaque(true);
+        label.setBackground(new Color(230, 230, 230)); // Light gray background
+        label.setHorizontalAlignment(SwingConstants.CENTER); // Center the text inside the square
+        label.setAlignmentX(Component.CENTER_ALIGNMENT);
+        label.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.BLACK),
+                BorderFactory.createEmptyBorder(5, 20, 5, 20) // Top, Left, Bottom, Right padding
+        ));
+    }
 } // End of DataActionPanel Class
 
-// Custom UI class for a gradient-colored slider track
+// Custom UI class for a gradient-colored slider track with moderately soft colors
 class GradientSliderUI extends BasicSliderUI {
 
-    // Constructor that takes a JSlider component
+    // Constructor that takes a JSlider component and initializes the slider UI
     public GradientSliderUI(JSlider slider) {
-        super(slider); // Call the superclass constructor to set up the slider UI
+        super(slider); // Call the superclass constructor to set up the basic slider UI
     }
 
-    // Override the method to paint the slider track with a gradient
+    // Override the method to paint the slider track with a moderately soft gradient color
     @Override
     public void paintTrack(Graphics g) {
-        // Cast the Graphics object to Graphics2D for advanced painting features
+        // Cast the Graphics object to Graphics2D to access advanced painting features
         Graphics2D g2d = (Graphics2D) g;
 
-        // Get the bounds of the slider track
+        // Get the bounding rectangle of the slider track
         Rectangle trackBounds = trackRect;
 
-        // Create a gradient paint from blue to red along the width of the track
+        // Create a gradient paint that transitions from a softer, more vibrant blue to a soft red along the track's width
         GradientPaint gp = new GradientPaint(
-                trackBounds.x, trackBounds.y, Color.BLUE,       // Start color (blue) at the beginning of the track
-                trackBounds.width, trackBounds.y, Color.RED     // End color (red) at the end of the track
+                trackBounds.x, trackBounds.y, new Color(50, 150, 250),  // Soft sky blue at the left side of the track
+                trackBounds.width, trackBounds.y, new Color(240, 100, 100) // Light coral (soft red) at the right side of the track
         );
 
-        // Set the gradient paint to the Graphics2D object
+        // Apply the gradient paint to the Graphics2D object
         g2d.setPaint(gp);
 
-        // Fill the track with the gradient paint, adjusting for the center position
+        // Paint the track with the gradient, centering it vertically within the track bounds
         g2d.fillRect(trackBounds.x, trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width, 4);
     }
 
-    // Override the method to paint the slider thumb
+    // Override the method to paint the slider thumb (the movable part of the slider)
     @Override
     public void paintThumb(Graphics g) {
-        // Set the thumb color to white before painting it
+        // Set the color of the thumb to white
         g.setColor(Color.WHITE);
 
-        // Call the superclass method to paint the thumb with the chosen color
+        // Call the superclass method to paint the thumb using the set color
         super.paintThumb(g);
     }
 }
