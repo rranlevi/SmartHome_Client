@@ -1,29 +1,28 @@
-import Classes.Device;
 
 import javax.swing.*;
 import java.awt.*;
 import Classes.*;
 import java.awt.event.*;
 import java.util.Comparator;
-import java.util.List;
 
 public class MainPanel extends JPanel {
     private CardLayout cardLayout;
     private JPanel cardPanel;
     private JPanel devicesPanel;
 
+    // booting up main menu
     public MainPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
         this.cardPanel = cardPanel;
         setLayout(new BorderLayout());
 
-        // Create and add the title at the top
+        // Create and add title at the top
         JLabel titleLabel = new JLabel("Main Menu", JLabel.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
         titleLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 10, 0)); // Add padding around the title
         add(titleLabel, BorderLayout.NORTH);
 
-        // Create the button and the dropdown for sorting
+        // Create button to add new devices and the dropdown for sorting
         JButton button = new JButton("Add New Devices");
         button.addActionListener(_ -> cardLayout.show(cardPanel, "AddDevicesPanel"));
         JComboBox<String> sortComboBox = createSortComboBox();
@@ -32,7 +31,7 @@ public class MainPanel extends JPanel {
         JPanel southPanel = new JPanel();
         southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.Y_AXIS));
 
-        // Ensure the dropdown and button stay within the window's width and are centered
+        // Ensure the dropdown and button are centered
         JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         sortPanel.add(sortComboBox);
         southPanel.add(sortPanel);
@@ -48,6 +47,7 @@ public class MainPanel extends JPanel {
         devicesPanel = new JPanel();
         devicesPanel.setLayout(new BoxLayout(devicesPanel, BoxLayout.Y_AXIS));
 
+        // Refresh the device list when we come back from a different page (I.E we add new devices)
         this.addComponentListener(new ComponentAdapter() {
             public void componentShown(ComponentEvent e) {
                 refreshDevicesPanel();
@@ -60,12 +60,13 @@ public class MainPanel extends JPanel {
 
         refreshDevicesPanel();
     }
-
+    // list all devices that were added to client
     private void refreshDevicesPanel() {
+        //cleaning up leftovers from previous listing
         devicesPanel.removeAll();
 
         if (SharedDB.getDevices().isEmpty()) {
-            // Center the "No devices connected" message
+            //Set message that there are no devices connected to client (instead of blank screen)
             JLabel noDevicesLabel = new JLabel("No devices connected");
             noDevicesLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
             devicesPanel.add(Box.createVerticalGlue());
@@ -74,6 +75,7 @@ public class MainPanel extends JPanel {
         } else {
             devicesPanel.add(Box.createVerticalGlue());
             for (HouseholdDevice device : SharedDB.getDevices()) {
+                // for each device connected to client:
                 JPanel devicePanel = new JPanel(new BorderLayout());
                 devicePanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -91,6 +93,7 @@ public class MainPanel extends JPanel {
                 JPanel buttonPanel = new JPanel();
                 buttonPanel.setLayout(new FlowLayout(FlowLayout.RIGHT));
 
+                //Move to the specific device's action & data menu
                 JButton actionsDataButton = new JButton("Actions & Data");
                 actionsDataButton.addActionListener(e -> {
                     DataActionPanel dataActionPanel = new DataActionPanel(cardLayout, cardPanel, device);
@@ -99,6 +102,7 @@ public class MainPanel extends JPanel {
                 });
                 buttonPanel.add(actionsDataButton);
 
+                //remove device from connected device list I.E disconnect device (device still exists at server)
                 JButton removeButton = new JButton("Remove");
                 removeButton.addActionListener(e -> {
                     SharedDB.removeDevice(device.getDeviceId());
