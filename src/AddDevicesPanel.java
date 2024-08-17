@@ -11,7 +11,6 @@ import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.*;
 
-
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
     private CardLayout cardLayout;
@@ -19,6 +18,7 @@ public class AddDevicesPanel extends JPanel {
     private JTable table; // Reference to JTable
     private JLabel loadingLabel; // Label for loading GIF
     private JScrollPane scrollPane; // ScrollPane for JTable
+    private JLabel noDevicesLabel; // Label to display "No new devices available."
 
     public AddDevicesPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
@@ -54,6 +54,10 @@ public class AddDevicesPanel extends JPanel {
         // Create the loading GIF label
         loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
         loadingLabel.setHorizontalAlignment(JLabel.CENTER);
+
+        // Create the "No new devices available" label
+        noDevicesLabel = new JLabel("No new devices available.", JLabel.CENTER);
+        noDevicesLabel.setFont(new Font("Arial", Font.BOLD, 18));
 
         // Initially show the loading label
         add(loadingLabel, BorderLayout.CENTER);
@@ -106,15 +110,15 @@ public class AddDevicesPanel extends JPanel {
     // Show the loading GIF while refreshing or loading from server
     private void showLoadingIcon() {
         remove(scrollPane); // Remove the JTable's scroll pane
+        remove(noDevicesLabel); // Remove the no devices label if it was displayed
         add(loadingLabel, BorderLayout.CENTER); // Show the loading label
         revalidate();
         repaint();
     }
 
-    // Hide the loading GIF and show the table when we are done
+    // Hide the loading GIF and show the table or the "No devices" label
     private void hideLoadingIcon() {
         remove(loadingLabel); // Remove the loading label
-        add(scrollPane, BorderLayout.CENTER); // Show the JTable's scroll pane
         revalidate();
         repaint();
     }
@@ -146,7 +150,6 @@ public class AddDevicesPanel extends JPanel {
                     }
                     return filteredDevices;
 
-                  // Catch any exception and print them
                 } catch (Exception e) {
                     e.printStackTrace();
                     return Collections.emptyList();
@@ -157,13 +160,15 @@ public class AddDevicesPanel extends JPanel {
             protected void done() {
                 try {
                     receivedDevices = get();
-                    displayDeviceList(tableModel);
+                    if (receivedDevices.isEmpty()) {
+                        showNoDevicesMessage(); // Show the "No devices" message
+                    } else {
+                        displayDeviceList(tableModel); // Show the table with devices
+                    }
                 } catch (InterruptedException | ExecutionException e) {
                     e.printStackTrace();
-
-                    // Executed regardless of whether an exception was thrown
                 } finally {
-                    hideLoadingIcon(); // Hide loading GIF and show the table
+                    hideLoadingIcon(); // Hide loading GIF and show the appropriate view
                 }
             }
         };
@@ -171,43 +176,55 @@ public class AddDevicesPanel extends JPanel {
     }
 
     // Display the device list in the JTable
+    // Display the device list in the JTable
     private void displayDeviceList(DefaultTableModel tableModel) {
         tableModel.setRowCount(0); // Clear existing rows
 
-        for (HouseholdDevice device : receivedDevices) {
-            // Image icon for each device
-            ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
-
-            // Add row to table model
-            tableModel.addRow(new Object[]{imageIcon, device.getDeviceName(), device.getDeviceRoom(), device.getDescription(), false});
-        }
-
         if (receivedDevices.isEmpty()) {
-            tableModel.addRow(new Object[]{null, "No new devices available.", "", "", null});
-        }
+            showNoDevicesMessage(); // Show the "No devices" message
+        } else {
+            remove(noDevicesLabel); // Remove the no devices label if it was displayed
+            add(scrollPane, BorderLayout.CENTER); // Add the table back to the panel
 
-        // Set a custom cell renderer to add the tooltip to the "Description" column
-        table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
-            // We override the default cell behaviour for cell 3 (Description) to implement a tooltip on it
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            for (HouseholdDevice device : receivedDevices) {
+                // Image icon for each device
+                ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
 
-                // If the component we received is of type JComponent
-                if (c instanceof JComponent) {
-                    JComponent jc = (JComponent) c;
-
-                    // Set the full description as the tooltip
-                    if (value != null) {
-                        jc.setToolTipText(value.toString());
-                    } else {
-                        jc.setToolTipText(null);
-                    }
-
-                }
-                return c;
+                // Add row to table model
+                tableModel.addRow(new Object[]{imageIcon, device.getDeviceName(), device.getDeviceRoom(), device.getDescription(), false});
             }
-        });
+
+            // Set a custom cell renderer to add the tooltip to the "Description" column
+            table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+                @Override
+                public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                    Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                    // If the component we received is of type JComponent
+                    if (c instanceof JComponent) {
+                        JComponent jc = (JComponent) c;
+
+                        // Set the full description as the tooltip
+                        if (value != null) {
+                            jc.setToolTipText(value.toString());
+                        } else {
+                            jc.setToolTipText(null);
+                        }
+                    }
+                    return c;
+                }
+            });
+
+            revalidate();
+            repaint();
+        }
+    }
+
+    // Show the "No new devices available" message
+    private void showNoDevicesMessage() {
+        remove(scrollPane); // Remove the JTable if it was displayed
+        add(noDevicesLabel, BorderLayout.CENTER); // Add the no devices label
+        revalidate();
+        repaint();
     }
 
     // Fetch devices from the server using GET
