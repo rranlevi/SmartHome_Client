@@ -16,40 +16,26 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
 
-class JLabelRenderer extends DefaultTableCellRenderer {
-    @Override
-    public Component getTableCellRendererComponent(JTable table, Object value,
-                                                   boolean isSelected, boolean hasFocus, int row, int column) {
-        if (value instanceof JLabel) {
-            JLabel label = (JLabel) value;
-            return label; // Return the JLabel itself
-        }
-        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-    }
-}
-
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
-    private List<JCheckBox> checkBoxes;
     private CardLayout cardLayout;
     private JPanel cardPanel;
-    private JTable table; // Reference to JTable
+    private JTable table;
 
     public AddDevicesPanel(CardLayout cardLayout, JPanel cardPanel) {
         this.cardLayout = cardLayout;
         this.cardPanel = cardPanel;
-        this.checkBoxes = new ArrayList<>();
         setLayout(new BorderLayout());
 
         // Add title label
         add(createTitle(), BorderLayout.NORTH);
 
         // Create the JTable to display devices
-        String[] columnNames = {"Icon", "Device Info", "Device Description" , "Select"};
+        String[] columnNames = {"Icon", "Device Name", "Room", "Description", "Select"};
         DefaultTableModel tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 3; // Make only the checkbox column editable
+                return column == 4; // Make only the checkbox column editable
             }
         };
         table = new JTable(tableModel) {
@@ -57,13 +43,11 @@ public class AddDevicesPanel extends JPanel {
             public Class<?> getColumnClass(int column) {
                 return switch (column) {
                     case 0 -> ImageIcon.class;
-                    case 2 -> JLabel.class;
-                    case 3 -> Boolean.class;
+                    case 4 -> Boolean.class;
                     default -> String.class;
                 };
             }
         };
-        table.getColumnModel().getColumn(2).setCellRenderer(new JLabelRenderer());
         table.setRowHeight(40); // Set a consistent row height for all rows
 
         // Wrap the table in a JScrollPane
@@ -120,7 +104,7 @@ public class AddDevicesPanel extends JPanel {
         // Clear existing components and show loading icon
         tableModel.setRowCount(0);
         JLabel loadingLabel = new JLabel(new ImageIcon("Images/reload_gif.gif"));
-        tableModel.addRow(new Object[]{loadingLabel, "Loading...", null});
+        tableModel.addRow(new Object[]{loadingLabel, "Loading...", "", "", null});
     }
 
     // Refresh the device list
@@ -182,16 +166,25 @@ public class AddDevicesPanel extends JPanel {
             ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
 
             // Add row to table model
-            JLabel deviceInfo = new JLabel(Utils.fixNumOfChars(device.getDescription(), 28));
-            deviceInfo.setToolTipText(device.getDescription());
-
-            tableModel.addRow(new Object[]{imageIcon, device.getDeviceName() + " - "
-                    + device.getDeviceRoom() + " - ", deviceInfo, false});
+            tableModel.addRow(new Object[]{imageIcon, device.getDeviceName(), device.getDeviceRoom(), device.getDescription(), false});
         }
 
         if (receivedDevices.isEmpty()) {
-            tableModel.addRow(new Object[]{null, "No new devices available.", null});
+            tableModel.addRow(new Object[]{null, "No new devices available.", "", "", null});
         }
+
+        // Set a custom cell renderer to add the tooltip to the "Description" column
+        table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+                if (c instanceof JComponent) {
+                    JComponent jc = (JComponent) c;
+                    jc.setToolTipText(value != null ? value.toString() : null); // Set the full description as the tooltip
+                }
+                return c;
+            }
+        });
     }
 
     // Fetch devices from the server using GET
@@ -254,7 +247,7 @@ public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> getSelectedDevices(DefaultTableModel tableModel) {
         List<HouseholdDevice> selectedDevices = new ArrayList<>();
         for (int i = 0; i < tableModel.getRowCount(); i++) {
-            Boolean isSelected = (Boolean) tableModel.getValueAt(i, 2);
+            Boolean isSelected = (Boolean) tableModel.getValueAt(i, 4); // Checkbox is in column 4
             if (isSelected != null && isSelected) {
                 selectedDevices.add(receivedDevices.get(i));
             }
@@ -302,14 +295,5 @@ public class AddDevicesPanel extends JPanel {
             }
         });
         return refreshButton;
-    }
-
-    // Use this component to center everything
-    private Component centerComponent(JComponent component) {
-        Box box = Box.createHorizontalBox();
-        box.add(Box.createHorizontalGlue());
-        box.add(component);
-        box.add(Box.createHorizontalGlue());
-        return box;
     }
 }
