@@ -105,7 +105,7 @@ public class AddDevicesPanel extends JPanel {
     private void refreshDeviceList() {
         showLoadingIcon();
 
-        // Use SwingWorker to handle UI processing in the background
+        // Use SwingWorker to handle UI processing in the background (thread)
         SwingWorker<List<HouseholdDevice>, Void> worker = new SwingWorker<List<HouseholdDevice>, Void>() {
             @Override
             protected List<HouseholdDevice> doInBackground() throws Exception {
@@ -130,6 +130,7 @@ public class AddDevicesPanel extends JPanel {
                     return filteredDevices;
 
                 } catch (Exception e) {
+                    // Print the throw if it happens
                     e.printStackTrace();
                     return Collections.emptyList();
                 }
@@ -157,17 +158,21 @@ public class AddDevicesPanel extends JPanel {
 
         boolean newDevicesFound = false;
 
+        // Concatenate and add the device list if necessary
         for (HouseholdDevice device : receivedDevices) {
             JPanel deviceItemPanel = new JPanel();
             deviceItemPanel.setLayout(new BoxLayout(deviceItemPanel, BoxLayout.X_AXIS));
 
+            // Image icon for each device that we receive
             ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
             JLabel imageLabel = new JLabel(imageIcon);
 
+            // Checkbox for each device that we receive
             JCheckBox checkBox = new JCheckBox(device.getDeviceName() + " - " +
                     device.getDeviceRoom() + " - " + device.getDescription());
             checkBoxes.add(checkBox);
 
+            // Add everything to the device panel
             deviceItemPanel.add(Box.createHorizontalGlue());
             deviceItemPanel.add(imageLabel);
             deviceItemPanel.add(Box.createRigidArea(new Dimension(10, 0)));
@@ -178,6 +183,7 @@ public class AddDevicesPanel extends JPanel {
             newDevicesFound = true;
         }
 
+        // If we haven't found newly added devices
         if (!newDevicesFound) {
             JLabel noNewDevicesLabel = new JLabel("No new devices available.");
             devicePanel.add(centerComponent(noNewDevicesLabel));
@@ -191,6 +197,7 @@ public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> fetchDevicesFromServer() {
         List<HouseholdDevice> devices = new ArrayList<>();
 
+        // We get the devices
         RequestStatus getDiscDevicesStatus = SharedDB.restWrapper.sendGet(RestPath.GET_DISC_DEVICES_PATH);
         if (getDiscDevicesStatus.isSuccess()) {
             Gson gson = GsonUtil.createGson();
