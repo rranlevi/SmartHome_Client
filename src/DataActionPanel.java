@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 
@@ -164,6 +165,11 @@ public class DataActionPanel extends JPanel {
                             actionSlider = new JSlider(); // Default slider range
                         }
 
+                        // Set the appearance of the slider
+                        actionSlider.setUI(new GradientSliderUI(actionSlider));
+                        actionSlider.setPreferredSize(new Dimension(300, 50)); // Increase width and height
+                        actionSlider.setOpaque(false);
+
                         actionSliderLabel.setToolTipText(action.getDescription());
                         actionSliderLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
                         actionSlider.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -282,3 +288,52 @@ public class DataActionPanel extends JPanel {
         }).start();
     }
 } // End of DataActionPanel Class
+
+
+class GradientSliderUI extends BasicSliderUI {
+
+    public GradientSliderUI(JSlider slider) {
+        super(slider);
+    }
+
+    @Override
+    public void paintTrack(Graphics g) {
+        Graphics2D g2d = (Graphics2D) g;
+        Rectangle trackBounds = trackRect;
+
+        // Create a gradient from blue to green to yellow to red
+        GradientPaint gp = new GradientPaint(
+                trackBounds.x, trackBounds.y, Color.BLUE, // Start with blue
+                trackBounds.x + ((float) trackBounds.width / 3), trackBounds.y, Color.GREEN // Transition to green
+        );
+
+        GradientPaint gp2 = new GradientPaint(
+                trackBounds.x + ((float) trackBounds.width / 3), trackBounds.y, Color.GREEN,
+                trackBounds.x + ((float) (2 * trackBounds.width) / 3), trackBounds.y, Color.YELLOW // Transition to yellow
+        );
+
+        GradientPaint gp3 = new GradientPaint(
+                trackBounds.x + ((float) (2 * trackBounds.width) / 3), trackBounds.y, Color.YELLOW,
+                trackBounds.x + trackBounds.width, trackBounds.y, Color.RED // Transition to red
+        );
+
+        // Draw the first gradient (blue to green)
+        g2d.setPaint(gp);
+        g2d.fillRect(trackBounds.x, trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
+
+        // Draw the second gradient (green to yellow)
+        g2d.setPaint(gp2);
+        g2d.fillRect(trackBounds.x + (trackBounds.width / 3), trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
+
+        // Draw the third gradient (yellow to red)
+        g2d.setPaint(gp3);
+        g2d.fillRect(trackBounds.x + (2 * trackBounds.width / 3), trackBounds.y + (trackBounds.height / 2) - 2, trackBounds.width / 3, 4);
+    }
+
+    @Override
+    public void paintThumb(Graphics g) {
+        g.setColor(Color.WHITE);
+        super.paintThumb(g);
+    }
+}
+
