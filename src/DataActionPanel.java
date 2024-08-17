@@ -2,15 +2,21 @@ import javax.swing.*;
 import javax.swing.plaf.basic.BasicSliderUI;
 import java.awt.*;
 import java.awt.event.ItemEvent;
-import java.util.Objects;
+import java.util.TimerTask;
 
 import Classes.*;
+
+import java.util.Timer;
 
 
 public class DataActionPanel extends JPanel {
     private final CardLayout cardLayout;
     private final JPanel cardPanel;
     private final HouseholdDevice device;
+    private static Integer counter = 1;
+    private JLabel dataLabel;
+    private Timer timer;
+
 
     public DataActionPanel(CardLayout cardLayout, JPanel cardPanel, HouseholdDevice device) {
         this.cardLayout = cardLayout;
@@ -39,6 +45,7 @@ public class DataActionPanel extends JPanel {
         JPanel buttonPanel = new JPanel();
         buttonPanel.setLayout(new FlowLayout());
         buttonPanel.add(returnButton);
+        //buttonPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
         add(buttonPanel, BorderLayout.SOUTH);
 
         revalidate();
@@ -77,6 +84,7 @@ public class DataActionPanel extends JPanel {
 
         // Remove the underline separator beneath the title
         // (Previously we added a JSeparator here, now it's removed)
+        //devicePanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
 
         return devicePanel;
     }
@@ -85,6 +93,9 @@ public class DataActionPanel extends JPanel {
     private JPanel createCentralPanel() {
         JPanel centralPanel = new JPanel();
         centralPanel.setLayout(new BoxLayout(centralPanel, BoxLayout.Y_AXIS));
+
+        // Add a border with a visible width (e.g., 2 pixels) and a specific color (e.g., black)
+        //centralPanel.setBorder(BorderFactory.createLineBorder(Color.BLACK, 2));
 
         JPanel dataSection = createDataSection();
         centralPanel.add(dataSection);
@@ -95,6 +106,7 @@ public class DataActionPanel extends JPanel {
 
         return centralPanel;
     }
+
 
     private JPanel createUnderlinedTitle(String title) {
         JPanel titlePanel = new JPanel(new BorderLayout());
@@ -113,7 +125,7 @@ public class DataActionPanel extends JPanel {
 
     private JPanel createDataSection() {
         JPanel dataSection = new JPanel(new BorderLayout());
-        dataSection.setBorder(BorderFactory.createEmptyBorder(0, 20, 0, 20)); // Add padding
+        dataSection.setBorder(BorderFactory.createEmptyBorder(5, 20, 0, 20)); // Add padding
 
         // Create the underlined title
         JPanel dataTitlePanel = createUnderlinedTitle("Data");
@@ -122,7 +134,17 @@ public class DataActionPanel extends JPanel {
         JPanel dataPanel = new JPanel();
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
         for (DeviceInfo data : device.getDeviceDataController().getDeviceData()) {
-            RequestStatus requestStatus = SharedDB.restWrapper.sendGet(data.getChannel().getChannelPath());
+            RequestStatus requestStatus;
+            try {
+                requestStatus = SharedDB.restWrapper.sendGet(data.getChannel().getChannelPath());
+            } catch (Exception e) {
+                // Print the throw if it happens
+                System.out.println("[ERROR] Couldn't get data from server");
+                e.printStackTrace();
+                return new JPanel() {{
+                    add(new JLabel("[ERROR] Couldn't get data from server"));
+                }};
+            }
 
             // Create a panel for each data item
             JPanel dataItemPanel = new JPanel();
@@ -138,18 +160,21 @@ public class DataActionPanel extends JPanel {
             infoNameLabel.setBackground(new Color(230, 230, 230)); // Light gray background
             infoNameLabel.setPreferredSize(new Dimension(200, 40)); // Increased size for square look
             infoNameLabel.setHorizontalAlignment(SwingConstants.CENTER); // Center the text inside the square
-            infoNameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            infoNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
             // Style for the message
-            JLabel dataLabel;
-            if (requestStatus.getMessage().length() > 1000) {
-                ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage(), 640, 640);
-                dataLabel = new JLabel(imageIcon);
-            }
-            else {
+            if (requestStatus.getMessage().startsWith("image:")) {
+                try {
+                    ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage().replace("image:", ""), 400, 400);
+                    dataLabel = new JLabel(imageIcon);
+                } catch (Exception e) {
+                    System.out.println("[ERROR] Couldn't covert message to Image");
+                    dataLabel = new JLabel("[ERROR] Couldn't covert message to Image");
+                }
+            } else {
                 dataLabel = new JLabel(requestStatus.getMessage());
                 dataLabel.setFont(new Font("Arial", Font.PLAIN, 18)); // Larger font size
-                dataLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+                dataLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
                 dataLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // Adding some space below the info name
             }
 
@@ -194,17 +219,28 @@ public class DataActionPanel extends JPanel {
                         for (String item : ((Dropdown) action.getWidget()).getListOptions()) {
                             actionCombobox.addItem(item);
                         }
-                        RequestStatus dropDownData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
-                        actionCombobox.setSelectedItem(dropDownData.getMessage());
-                        actionCombobox.addActionListener(_ -> {
-                            String selectedItem = (String) actionCombobox.getSelectedItem();
-                            SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), selectedItem);
-                            showLoadingIcon(); // For simulating server response
-                            initializeComponents();
-                        });
+
+                        try {
+                            RequestStatus dropDownData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
+                            actionCombobox.setSelectedItem(dropDownData.getMessage());
+                            actionCombobox.addActionListener(_ -> {
+                                String selectedItem = (String) actionCombobox.getSelectedItem();
+                                try {
+                                    SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), selectedItem);
+                                    showLoadingIcon(); // For simulating server response
+                                    initializeComponents();
+                                } catch (Exception ex) {
+                                    JOptionPane.showMessageDialog(null, "[ERROR] Couldn't send data to server", "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            });
+                        } catch (Exception ex) {
+                            return new JPanel() {{
+                                add(new JLabel("[ERROR] Couldn't get data from server"));
+                            }};
+                        }
 
                         // Create a container panel with FlowLayout for proper alignment
-                        JPanel dropdownContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        JPanel dropdownContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
                         dropdownContainer.add(actionComboboxLabel);
                         dropdownContainer.add(actionCombobox);
 
@@ -231,22 +267,31 @@ public class DataActionPanel extends JPanel {
                         actionSlider.setUI(new GradientSliderUI(actionSlider));
                         actionSlider.setPreferredSize(new Dimension(200, 50)); // Adjust the width
                         actionSlider.setOpaque(false);
-
-                        // Fetch initial value from the server and set the slider's value
-                        RequestStatus sliderData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
-                        actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
-                        sliderValueLabel.setText("Value: " + actionSlider.getValue());
-
-                        // Update the slider value label when the slider is moved
-                        actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
-
-                        // Send button action to send the slider value
-                        sendButton.addActionListener(_ -> {
-                            SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), String.valueOf(actionSlider.getValue()));
-                            showLoadingIcon(); // For simulating server response
-                            initializeComponents();
+                        try {
+                            // Fetch initial value from the server and set the slider's value
+                            RequestStatus sliderData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
+                            actionSlider.setValue(Integer.parseInt(sliderData.getMessage()));
                             sliderValueLabel.setText("Value: " + actionSlider.getValue());
-                        });
+
+                            // Update the slider value label when the slider is moved
+                            actionSlider.addChangeListener(_ -> sliderValueLabel.setText("Value: " + actionSlider.getValue()));
+
+                            // Send button action to send the slider value
+                            sendButton.addActionListener(_ -> {
+                                try {
+                                    SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), String.valueOf(actionSlider.getValue()));
+                                    showLoadingIcon(); // For simulating server response
+                                    initializeComponents();
+                                    sliderValueLabel.setText("Value: " + actionSlider.getValue());
+                                } catch (Exception ex) {
+                                    JOptionPane.showMessageDialog(null, "[ERROR] Couldn't send data to server", "Error", JOptionPane.ERROR_MESSAGE);
+                                }
+                            });
+                        } catch (Exception ex) {
+                            return new JPanel() {{
+                                add(new JLabel("[ERROR] Couldn't get data from server"));
+                            }};
+                        }
 
                         // Create a panel for the slider and its label
                         JPanel sliderLabelPanel = new JPanel(new BorderLayout());
@@ -260,7 +305,7 @@ public class DataActionPanel extends JPanel {
                         valueSendPanel.add(sendButton);
 
                         // Create a container panel with FlowLayout for proper alignment
-                        JPanel sliderContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        JPanel sliderContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
                         sliderContainer.add(sliderLabelPanel);
                         sliderContainer.add(valueSendPanel);
 
@@ -273,38 +318,49 @@ public class DataActionPanel extends JPanel {
                         JToggleButton actionSwitch = new JToggleButton(action.getName());
                         actionSwitch.setToolTipText(action.getDescription());
                         actionSwitch.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        RequestStatus switchData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
+                        try {
+                            RequestStatus switchData = SharedDB.restWrapper.sendGet(action.getDataChannel().getChannelPath());
 
-                        switch (switchData.getMessage()) {
-                            case "On":
-                                actionSwitch.setSelected(true);
-                                if (action.getName().equals("Power")) {
-                                    // Disable the default selected color
-                                    actionSwitch.setContentAreaFilled(false);
-                                    actionSwitch.setOpaque(true);
-                                    actionSwitch.setBackground(Color.GREEN);
+                            switch (switchData.getMessage()) {
+                                case "On":
+                                    actionSwitch.setSelected(true);
+                                    if (action.getName().equals("Power")) {
+                                        // Disable the default selected color
+                                        actionSwitch.setContentAreaFilled(false);
+                                        actionSwitch.setOpaque(true);
+                                        actionSwitch.setBackground(Color.GREEN);
+                                    }
+                                    break;
+                                case "Off":
+                                    actionSwitch.setSelected(false);
+                                    if (action.getName().equals("Power")) {
+                                        actionSwitch.setBackground(Color.RED);
+                                    }
+                                    break;
+                            }
+
+                            actionSwitch.addItemListener(ev -> {
+                                try {
+                                    if (ev.getStateChange() == ItemEvent.SELECTED) {
+                                        SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "On");
+                                    } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
+                                        SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "Off");
+                                    }
+                                    showLoadingIcon(); // For simulating server response
+                                    initializeComponents();
+                                } catch (Exception ex) {
+                                    JOptionPane.showMessageDialog(null, "[ERROR] Couldn't send data to server", "Error", JOptionPane.ERROR_MESSAGE);
                                 }
-                                break;
-                            case "Off":
-                                actionSwitch.setSelected(false);
-                                if (action.getName().equals("Power")) {
-                                    actionSwitch.setBackground(Color.RED);
-                                }
-                                break;
+                            });
+                        } catch (Exception ex) {
+                            return new JPanel() {{
+                                add(new JLabel("[ERROR] Couldn't get data from server"));
+                            }};
                         }
 
-                        actionSwitch.addItemListener(ev -> {
-                            if (ev.getStateChange() == ItemEvent.SELECTED) {
-                                SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "On");
-                            } else if (ev.getStateChange() == ItemEvent.DESELECTED) {
-                                SharedDB.restWrapper.sendPost(action.getActionChannel().getChannelPath(), "Off");
-                            }
-                            showLoadingIcon(); // For simulating server response
-                            initializeComponents();
-                        });
 
                         // Create a container panel with FlowLayout for proper alignment
-                        JPanel switchContainer = new JPanel(new FlowLayout(FlowLayout.LEFT));
+                        JPanel switchContainer = new JPanel(new FlowLayout(FlowLayout.CENTER));
                         switchContainer.add(actionSwitch);
 
                         // Add the switchContainer directly to the actionPanel
@@ -312,7 +368,14 @@ public class DataActionPanel extends JPanel {
                         break;
 
                     case "CameraStream":
-
+                        timer = new Timer();
+                        timer.scheduleAtFixedRate(new TimerTask() {
+                            @Override
+                            public void run() {
+                                // Refresh image here
+                                refreshImage(action.getActionChannel().getChannelPath(), action.getDataChannel().getChannelPath());
+                            }
+                        },50, 50);
                         break;
                 }
                 actionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Add space between actions
@@ -327,7 +390,13 @@ public class DataActionPanel extends JPanel {
     private JButton createReturnButton() {
         JButton returnButton = new JButton("Go back to main screen");
 
-        returnButton.addActionListener(_ -> cardLayout.show(cardPanel, "MainPanel"));
+        returnButton.addActionListener(_ -> {
+            if(timer != null) {
+                timer.cancel();
+                timer.purge(); // Clean up canceled tasks
+            }
+            cardLayout.show(cardPanel, "MainPanel");
+        });
         return returnButton;
     }
 
@@ -372,6 +441,20 @@ public class DataActionPanel extends JPanel {
             }
         }).start();
     }
+
+    private void refreshImage(String actionChannelPath, String dataChannelPath) {
+        try {
+            SharedDB.restWrapper.sendPost(actionChannelPath, (counter++).toString());
+            RequestStatus requestStatus = SharedDB.restWrapper.sendGet(dataChannelPath);
+            ImageIcon imageIcon = Utils.decodeBase64ToImage(requestStatus.getMessage().replace("image:", ""), 400, 400);
+            dataLabel.setIcon(imageIcon);
+        } catch (Exception e) {
+            System.out.println("[ERROR] Couldn't covert message to Image");
+            dataLabel = new JLabel("[ERROR] Couldn't covert message to Image");
+        }
+        dataLabel.revalidate();
+        dataLabel.repaint();
+    }
 } // End of DataActionPanel Class
 
 
@@ -400,4 +483,8 @@ class GradientSliderUI extends BasicSliderUI {
         super.paintThumb(g);
     }
 }
+
+
+
+
 
