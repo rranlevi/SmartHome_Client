@@ -1,7 +1,9 @@
 
 import javax.swing.*;
 import java.awt.*;
+
 import Classes.*;
+
 import java.awt.event.*;
 import java.util.Comparator;
 
@@ -60,6 +62,7 @@ public class MainPanel extends JPanel {
 
         refreshDevicesPanel();
     }
+
     // list all devices that were added to client
     private void refreshDevicesPanel() {
         //cleaning up leftovers from previous listing
@@ -85,8 +88,12 @@ public class MainPanel extends JPanel {
                 devicePanel.add(imageLabel, BorderLayout.WEST);
 
                 // Add device info
-                JLabel deviceInfo = new JLabel("<html>" + device.getDeviceName() + "<br>Room: " + device.getDeviceRoom() + "<br>Description: " + device.getDescription() + "</html>");
+                JLabel deviceInfo = new JLabel(
+                        "<html>" + device.getDeviceName() +
+                                "<br>Room: " + device.getDeviceRoom() +
+                                "<br>Description: " + Utils.fixNumOfChars(device.getDescription(), 40) + "</html>");
                 deviceInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+                deviceInfo.setToolTipText(device.getDescription());
                 devicePanel.add(deviceInfo, BorderLayout.CENTER);
 
                 // Add buttons
