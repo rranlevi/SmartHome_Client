@@ -1,4 +1,5 @@
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -14,6 +15,18 @@ import Enums.RestPath;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import java.lang.reflect.Type;
+
+class JLabelRenderer extends DefaultTableCellRenderer {
+    @Override
+    public Component getTableCellRendererComponent(JTable table, Object value,
+                                                   boolean isSelected, boolean hasFocus, int row, int column) {
+        if (value instanceof JLabel) {
+            JLabel label = (JLabel) value;
+            return label; // Return the JLabel itself
+        }
+        return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+    }
+}
 
 public class AddDevicesPanel extends JPanel {
     private List<HouseholdDevice> receivedDevices;
@@ -44,12 +57,13 @@ public class AddDevicesPanel extends JPanel {
             public Class<?> getColumnClass(int column) {
                 return switch (column) {
                     case 0 -> ImageIcon.class;
-                    case 3 -> Boolean.class;
                     case 2 -> JLabel.class;
+                    case 3 -> Boolean.class;
                     default -> String.class;
                 };
             }
         };
+        table.getColumnModel().getColumn(2).setCellRenderer(new JLabelRenderer());
         table.setRowHeight(40); // Set a consistent row height for all rows
 
         // Wrap the table in a JScrollPane
@@ -168,11 +182,7 @@ public class AddDevicesPanel extends JPanel {
             ImageIcon imageIcon = Utils.decodeBase64ToImage(device.getDeviceImage(), 34, 34);
 
             // Add row to table model
-            JLabel deviceInfo = new JLabel(
-                    "<html>" + device.getDeviceName() +
-                            "<br>Room: " + device.getDeviceRoom() +
-                            "<br>Description: " + Utils.fixNumOfChars(device.getDescription(), 40) + "</html>");
-            deviceInfo.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 10));
+            JLabel deviceInfo = new JLabel(Utils.fixNumOfChars(device.getDescription(), 28));
             deviceInfo.setToolTipText(device.getDescription());
 
             tableModel.addRow(new Object[]{imageIcon, device.getDeviceName() + " - "
