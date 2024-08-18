@@ -1,4 +1,4 @@
-# Smart Home Client
+# Smart Home Client - Group 8
 
 ## Overview
 This project is a Smart Home Server and Client implementation that facilitates the management and control of various household smart devices. The system is designed with a structured architecture that dynamically generates the user interface (UI) on the client side, based on the devices available and their states. The client fetching the devices data from the server, the server creates a mocking devices - but the project designed in a way that every data or action on a devices is a REST URL path, GET for data and POST for actions, in order to easily deploy to a real life scenario where the edge devices are real devices.
