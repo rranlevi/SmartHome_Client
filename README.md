@@ -27,7 +27,7 @@ This project is a Smart Home Server and Client implementation that facilitates t
 </ol>
 
 
-<h2>Project Requierments</h2>
+<h2>Project Requirements</h2>
 
 <ol>
     <li>
